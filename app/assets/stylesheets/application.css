@@ -1489,6 +1489,88 @@ body:has(.terminal-page) .theme-toggle:focus-visible {
   color: #66f2a3;
 }
 
+.sudoku-board {
+  display: grid;
+  grid-template-columns: repeat(9, 2.15rem);
+  justify-content: center;
+  margin: 0.95rem auto 1rem;
+  width: fit-content;
+  border: 2px solid rgba(102, 242, 163, 0.34);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sudoku-cell {
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  place-items: center;
+  border: 0;
+  border-right: 1px solid rgba(102, 242, 163, 0.12);
+  border-bottom: 1px solid rgba(102, 242, 163, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(219, 255, 232, 0.82);
+  cursor: pointer;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.sudoku-cell--box-end-col {
+  border-right-color: rgba(102, 242, 163, 0.46);
+  border-right-width: 2px;
+}
+
+.sudoku-cell--box-end-row {
+  border-bottom-color: rgba(102, 242, 163, 0.46);
+  border-bottom-width: 2px;
+}
+
+.sudoku-cell--given {
+  background: rgba(102, 242, 163, 0.11);
+  color: #66f2a3;
+}
+
+.sudoku-cell.is-related {
+  background: rgba(95, 212, 242, 0.1);
+}
+
+.sudoku-cell.is-selected {
+  background: rgba(242, 203, 98, 0.18);
+  color: #f2cb62;
+  outline: 2px solid rgba(242, 203, 98, 0.65);
+  outline-offset: -2px;
+}
+
+.sudoku-cell.is-error {
+  background: rgba(255, 109, 178, 0.14);
+  color: #ff91c6;
+}
+
+.sudoku-keypad {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.42rem;
+  margin-bottom: 0.85rem;
+}
+
+.sudoku-keypad button {
+  min-width: 2.35rem;
+  min-height: 2.2rem;
+  border: 1px solid rgba(102, 242, 163, 0.2);
+  border-radius: 6px;
+  background: rgba(102, 242, 163, 0.06);
+  color: rgba(219, 255, 232, 0.78);
+  cursor: pointer;
+  font: inherit;
+}
+
+.sudoku-keypad button:hover {
+  border-color: rgba(102, 242, 163, 0.7);
+  color: #66f2a3;
+}
+
 .terminal-help {
   padding-bottom: 1.2rem;
 }
@@ -1650,7 +1732,7 @@ body:has(.terminal-page) .theme-toggle:focus-visible {
   }
 
   .arcade-menu {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .terminal-help {
@@ -1714,6 +1796,16 @@ body:has(.terminal-page) .theme-toggle:focus-visible {
 
   .rubordle-key--wide {
     min-width: 4.5rem;
+  }
+
+  .sudoku-board {
+    grid-template-columns: repeat(9, 1.72rem);
+  }
+
+  .sudoku-cell {
+    width: 1.72rem;
+    height: 1.72rem;
+    font-size: 0.9rem;
   }
 
   .gallery-lightbox {

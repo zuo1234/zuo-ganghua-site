@@ -43,6 +43,17 @@ class ArcadeController extends Controller {
     "FLASH"
   ]
 
+  static sudokuPuzzles = [
+    {
+      puzzle: "530070000600195000098000060800060003400803001700020006060000280000419005000080079",
+      solution: "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+    },
+    {
+      puzzle: "000260701680070090190004500820100040004602900050003028009300074040050036703018000",
+      solution: "435269781682571493197834562826195347374682915951743628519326874248957136763418259"
+    }
+  ]
+
   connect() {
     this.game = this.initialGameValue
     this.score = 0
@@ -57,6 +68,11 @@ class ArcadeController extends Controller {
     this.rubordleCurrent = ""
     this.rubordleAnswer = this.rubordleDailyWord()
     this.rubordleComplete = false
+    this.sudokuPuzzle = this.sudokuDailyPuzzle()
+    this.sudokuBoard = this.sudokuPuzzle.puzzle.split("")
+    this.sudokuSelected = 0
+    this.sudokuErrors = new Set()
+    this.sudokuComplete = false
 
     this.boundKeydown = this.handleKeydown.bind(this)
     document.addEventListener("keydown", this.boundKeydown)
@@ -80,6 +96,7 @@ class ArcadeController extends Controller {
     if (this.game === "scan") this.startScan()
     if (this.game === "logs") this.startLogs()
     if (this.game === "rubordle") this.startRubordle()
+    if (this.game === "sudoku") this.startSudoku()
   }
 
   reset() {
@@ -92,6 +109,11 @@ class ArcadeController extends Controller {
     this.rubordleCurrent = ""
     this.rubordleAnswer = this.rubordleDailyWord()
     this.rubordleComplete = false
+    this.sudokuPuzzle = this.sudokuDailyPuzzle()
+    this.sudokuBoard = this.sudokuPuzzle.puzzle.split("")
+    this.sudokuSelected = 0
+    this.sudokuErrors = new Set()
+    this.sudokuComplete = false
     this.render()
   }
 
@@ -102,6 +124,7 @@ class ArcadeController extends Controller {
     if (this.game === "scan") this.handleScanKey(event)
     if (this.game === "logs") this.handleLogKey(event)
     if (this.game === "rubordle") this.handleRubordleKey(event)
+    if (this.game === "sudoku") this.handleSudokuKey(event)
   }
 
   startPath() {
@@ -227,6 +250,7 @@ class ArcadeController extends Controller {
     if (this.game === "scan") this.renderScan("ready")
     if (this.game === "logs") this.renderLogs("ready")
     if (this.game === "rubordle") this.renderRubordle("ready")
+    if (this.game === "sudoku") this.renderSudoku("ready")
   }
 
   updateTabs() {
@@ -547,6 +571,196 @@ class ArcadeController extends Controller {
     const words = this.constructor.rubordleWords
 
     return words[((day % words.length) + words.length) % words.length]
+  }
+
+  startSudoku() {
+    this.sudokuPuzzle = this.sudokuDailyPuzzle()
+    this.sudokuBoard = this.sudokuPuzzle.puzzle.split("")
+    this.sudokuSelected = this.sudokuBoard.findIndex((value) => value === "0")
+    if (this.sudokuSelected < 0) this.sudokuSelected = 0
+    this.sudokuErrors = new Set()
+    this.sudokuComplete = false
+    this.renderSudoku("fill the grid")
+    this.screenTarget.focus()
+  }
+
+  handleSudokuKey(event) {
+    if (this.sudokuComplete) return
+
+    const moves = {
+      ArrowUp: -9,
+      ArrowRight: 1,
+      ArrowDown: 9,
+      ArrowLeft: -1
+    }
+
+    if (event.key in moves) {
+      event.preventDefault()
+      this.moveSudokuSelection(moves[event.key])
+      return
+    }
+
+    if (/^[1-9]$/.test(event.key)) {
+      event.preventDefault()
+      this.fillSudokuCell(event.key)
+      return
+    }
+
+    if (event.key === "Backspace" || event.key === "Delete" || event.key === "0") {
+      event.preventDefault()
+      this.clearSudokuCell()
+    }
+  }
+
+  selectSudokuCell(event) {
+    this.sudokuSelected = Number(event.currentTarget.dataset.index)
+    this.renderSudoku("cell selected")
+    this.screenTarget.focus()
+  }
+
+  pressSudokuNumber(event) {
+    if (!this.running || this.sudokuComplete) return
+
+    const value = event.currentTarget.dataset.value
+    if (value === "clear") {
+      this.clearSudokuCell()
+    } else {
+      this.fillSudokuCell(value)
+    }
+    this.screenTarget.focus()
+  }
+
+  fillSudokuCell(value) {
+    if (this.sudokuPuzzle.puzzle[this.sudokuSelected] !== "0") {
+      this.renderSudoku("given cell")
+      return
+    }
+
+    if (this.sudokuBoard[this.sudokuSelected] === value) {
+      this.renderSudoku("already set")
+      return
+    }
+
+    this.sudokuBoard[this.sudokuSelected] = value
+    this.score = Math.max(0, this.score + (value === this.sudokuPuzzle.solution[this.sudokuSelected] ? 5 : -3))
+    this.updateSudokuErrors()
+
+    if (this.sudokuBoard.join("") === this.sudokuPuzzle.solution) {
+      this.sudokuComplete = true
+      this.score += 180
+      this.renderSudoku("grid solved")
+      return
+    }
+
+    this.renderSudoku(this.sudokuErrors.size > 0 ? "conflict found" : "keep solving")
+  }
+
+  clearSudokuCell() {
+    if (this.sudokuPuzzle.puzzle[this.sudokuSelected] !== "0") {
+      this.renderSudoku("given cell")
+      return
+    }
+
+    this.sudokuBoard[this.sudokuSelected] = "0"
+    this.updateSudokuErrors()
+    this.renderSudoku("cell cleared")
+  }
+
+  moveSudokuSelection(delta) {
+    const currentRow = Math.floor(this.sudokuSelected / 9)
+    const currentCol = this.sudokuSelected % 9
+    let next = this.sudokuSelected + delta
+
+    if (delta === 1 && currentCol === 8) next = this.sudokuSelected - 8
+    if (delta === -1 && currentCol === 0) next = this.sudokuSelected + 8
+    if (delta === 9 && currentRow === 8) next = currentCol
+    if (delta === -9 && currentRow === 0) next = 72 + currentCol
+
+    this.sudokuSelected = Math.max(0, Math.min(80, next))
+    this.renderSudoku("cell selected")
+  }
+
+  updateSudokuErrors() {
+    this.sudokuErrors = new Set()
+    this.sudokuBoard.forEach((value, index) => {
+      if (value !== "0" && value !== this.sudokuPuzzle.solution[index]) {
+        this.sudokuErrors.add(index)
+      }
+    })
+  }
+
+  renderSudoku(message) {
+    this.titleTarget.textContent = "SUDOKU"
+    this.statusTarget.textContent = message
+    this.scoreTarget.textContent = this.score
+    this.helpTarget.innerHTML = `
+      <h3>SUDOKU</h3>
+      <p>填满 9x9 数独。亮绿色是题目给定数字，蓝色是相同数字提示，粉色表示当前输入和答案冲突。</p>
+      <dl>
+        <dt>Move</dt><dd>方向键或点击格子</dd>
+        <dt>Input</dt><dd>数字键 1-9</dd>
+        <dt>Clear</dt><dd>Backspace / Delete / 0</dd>
+      </dl>
+    `
+
+    this.screenTarget.innerHTML = `
+      <div class="terminal-log">$ sudoku --daily --validate</div>
+      <div class="sudoku-board">${this.sudokuCells()}</div>
+      <div class="sudoku-keypad">${this.sudokuKeypad()}</div>
+      <div class="terminal-log">${this.sudokuErrors.size} conflicts · ${this.sudokuEmptyCount()} empty cells</div>
+    `
+
+    this.screenTarget.querySelectorAll("[data-index]").forEach((button) => {
+      button.addEventListener("click", (event) => this.selectSudokuCell(event))
+    })
+    this.screenTarget.querySelectorAll("[data-value]").forEach((button) => {
+      button.addEventListener("click", (event) => this.pressSudokuNumber(event))
+    })
+  }
+
+  sudokuCells() {
+    return this.sudokuBoard.map((value, index) => {
+      const given = this.sudokuPuzzle.puzzle[index] !== "0"
+      const selected = index === this.sudokuSelected
+      const sameValue = value !== "0" && value === this.sudokuBoard[this.sudokuSelected]
+      const error = this.sudokuErrors.has(index)
+      const boxEndCol = index % 3 === 2 && index % 9 !== 8
+      const boxEndRow = Math.floor(index / 9) % 3 === 2 && index < 72
+      const classes = [
+        "sudoku-cell",
+        given ? "sudoku-cell--given" : "",
+        selected ? "is-selected" : "",
+        sameValue ? "is-related" : "",
+        error ? "is-error" : "",
+        boxEndCol ? "sudoku-cell--box-end-col" : "",
+        boxEndRow ? "sudoku-cell--box-end-row" : ""
+      ].filter(Boolean).join(" ")
+
+      return `<button type="button" class="${classes}" data-index="${index}">${value === "0" ? "" : value}</button>`
+    }).join("")
+  }
+
+  sudokuKeypad() {
+    const buttons = Array.from({ length: 9 }, (_, index) => {
+      const value = String(index + 1)
+      return `<button type="button" data-value="${value}">${value}</button>`
+    })
+
+    buttons.push("<button type=\"button\" data-value=\"clear\">Clear</button>")
+    return buttons.join("")
+  }
+
+  sudokuEmptyCount() {
+    return this.sudokuBoard.filter((value) => value === "0").length
+  }
+
+  sudokuDailyPuzzle() {
+    const start = new Date("2026-01-01T00:00:00Z")
+    const today = new Date()
+    const day = Math.floor((Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) - start.getTime()) / 86400000)
+    const puzzles = this.constructor.sudokuPuzzles
+
+    return puzzles[((day % puzzles.length) + puzzles.length) % puzzles.length]
   }
 }
 

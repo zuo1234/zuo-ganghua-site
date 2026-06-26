@@ -12,4 +12,10 @@ class PagesController < ApplicationController
 
     render :games
   end
+
+  def sudoku
+    @initial_game = "sudoku"
+
+    render :games
+  end
 end
