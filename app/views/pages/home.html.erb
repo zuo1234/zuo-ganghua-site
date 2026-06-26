@@ -1,0 +1,122 @@
+<main class="site-main">
+  <section class="hero" aria-labelledby="intro-title">
+    <div class="identity">
+      <%= image_tag "avatar.png", class: "avatar", alt: "抽象个人头像" %>
+      <div class="identity__copy">
+        <p class="eyebrow">Software Engineer / Backend Developer</p>
+        <h1 id="intro-title">Zuogh</h1>
+        <p class="subtitle">软件工程师，专注后端开发，喜欢把复杂业务做成清晰、稳定、可维护的系统。</p>
+      </div>
+    </div>
+
+    <div class="intro-copy">
+      <p>
+        我熟悉后端服务、API 设计、数据库建模、异步任务和系统稳定性建设。主要使用
+        <strong>Ruby</strong>、<strong>Rails</strong>、<strong>Golang</strong> 等技术栈，
+        也会关注工程效率、测试策略和线上问题排查。
+      </p>
+      <p>
+        这个站点会持续整理我的技术文章、项目实践和工作流记录。你可以在这里看到我如何拆解需求、
+        设计服务边界、权衡 Rails 与 Go 的使用场景，以及如何把后端系统打磨得更可靠。
+      </p>
+    </div>
+
+    <nav class="social-links" aria-label="社交链接">
+      <a href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://x.com/" target="_blank" rel="noreferrer">X</a>
+      <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">LinkedIn</a>
+      <a href="mailto:hello@example.com">Email</a>
+    </nav>
+  </section>
+
+  <%= link_to games_path, class: "feature-link" do %>
+    <span class="feature-link__content">
+      <span class="feature-link__label">Bored? Play some games</span>
+      <span class="feature-link__text">Rails + Stimulus 做的一些终端小游戏。工作卡住时，来敲几下键盘。</span>
+    </span>
+    <span class="feature-link__arrow" aria-hidden="true">-&gt;</span>
+  <% end %>
+
+  <%= link_to photos_path, class: "feature-link feature-link--photos" do %>
+    <span class="feature-link__content">
+      <span class="feature-link__label">Photo log</span>
+      <span class="feature-link__text">记录一些城市、旅行和工作间隙里的画面。</span>
+    </span>
+    <span class="feature-link__arrow" aria-hidden="true">-&gt;</span>
+  <% end %>
+
+  <section class="section" aria-labelledby="writing-title">
+    <div class="section__header">
+      <h2 id="writing-title">近期写作</h2>
+      <%= link_to "View all", posts_path %>
+    </div>
+
+    <div class="list">
+      <% @recent_posts.each do |post| %>
+        <%= link_to post_path(post), class: "list-item" do %>
+          <span>
+            <strong><%= post.title %></strong>
+            <% if post.excerpt.present? %>
+              <small><%= post.excerpt %></small>
+            <% end %>
+          </span>
+          <time datetime="<%= post.display_date&.to_date&.iso8601 %>"><%= post_month(post) %></time>
+        <% end %>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="section" id="projects" aria-labelledby="projects-title">
+    <div class="section__header">
+      <h2 id="projects-title">项目</h2>
+      <a href="mailto:hello@example.com?subject=Project">聊聊合作</a>
+    </div>
+
+    <div class="projects">
+      <a class="project" href="#">
+        <strong>Rails Service Notes</strong>
+        <span>整理 Rails 后端服务设计、Active Record 建模和后台任务实践。</span>
+      </a>
+      <a class="project" href="#">
+        <strong>Go Backend Lab</strong>
+        <span>记录 Golang 服务、并发控制、超时处理和接口性能优化实验。</span>
+      </a>
+      <a class="project" href="#">
+        <strong>Ops Checklist</strong>
+        <span>沉淀部署、监控、日志、告警和线上故障排查的检查清单。</span>
+      </a>
+      <a class="project" href="#">
+        <strong>Backend Toolbox</strong>
+        <span>积累给自己和团队复用的脚本、调试工具和开发者效率工具。</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="section stack-section" aria-labelledby="stack-title">
+    <div class="section__header">
+      <h2 id="stack-title">现在关注</h2>
+    </div>
+
+    <div class="stack">
+      <span>Ruby</span>
+      <span>Ruby on Rails</span>
+      <span>Golang</span>
+      <span>PostgreSQL</span>
+      <span>API Design</span>
+      <span>Background Jobs</span>
+      <span>Observability</span>
+      <span>System Design</span>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-mark" aria-hidden="true">ZGH</div>
+  <nav class="footer-links" aria-label="页脚链接">
+    <a href="#intro-title">About</a>
+    <a href="#projects">Projects</a>
+    <%= link_to "Writing", posts_path %>
+    <%= link_to "Photos", photos_path %>
+    <a href="mailto:hello@example.com">Email</a>
+  </nav>
+</footer>

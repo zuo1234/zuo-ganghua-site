@@ -1,0 +1,52 @@
+<%= form_with model: [:admin, post], class: "post-form" do |form| %>
+  <% if post.errors.any? %>
+    <div class="form-errors">
+      <strong><%= pluralize(post.errors.count, "error") %> prevented this post from saving:</strong>
+      <ul>
+        <% post.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-grid">
+    <label>
+      <span>Title</span>
+      <%= form.text_field :title, required: true %>
+    </label>
+
+    <label>
+      <span>Slug</span>
+      <%= form.text_field :slug, placeholder: "auto-generated-from-title" %>
+    </label>
+  </div>
+
+  <label>
+    <span>Excerpt</span>
+    <%= form.text_area :excerpt, rows: 3 %>
+  </label>
+
+  <label>
+    <span>Body</span>
+    <%= form.text_area :body, rows: 16, required: true %>
+  </label>
+
+  <div class="form-grid">
+    <label>
+      <span>Status</span>
+      <%= form.select :status, Post::STATUSES.map { |status| [status.titleize, status] } %>
+    </label>
+
+    <label>
+      <span>Published at</span>
+      <%= form.datetime_local_field :published_at %>
+    </label>
+  </div>
+
+  <div class="form-actions">
+    <%= button_tag "Save draft", type: "submit", name: "commit_action", value: "draft", class: "admin-button" %>
+    <%= button_tag "Save and preview", type: "submit", name: "commit_action", value: "preview", class: "admin-button" %>
+    <%= button_tag "Publish", type: "submit", name: "commit_action", value: "publish", class: "admin-button admin-button--primary" %>
+  </div>
+<% end %>

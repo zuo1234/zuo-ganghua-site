@@ -1,0 +1,68 @@
+<%= form_with model: [:admin, photo], class: "post-form photo-form" do |form| %>
+  <% if photo.errors.any? %>
+    <div class="form-errors">
+      <strong><%= pluralize(photo.errors.count, "error") %> prevented this photo from saving:</strong>
+      <ul>
+        <% photo.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% if photo.image_url.present? %>
+    <div class="photo-form__preview">
+      <%= image_tag photo.image_url, alt: photo.title.presence || "Photo preview" %>
+    </div>
+  <% end %>
+
+  <div class="form-grid">
+    <label>
+      <span>Title</span>
+      <%= form.text_field :title, required: true %>
+    </label>
+
+    <label>
+      <span>Slug</span>
+      <%= form.text_field :slug, placeholder: "auto-generated-from-title" %>
+    </label>
+  </div>
+
+  <label>
+    <span>Image URL</span>
+    <%= form.url_field :image_url, required: true, placeholder: "https://images.unsplash.com/..." %>
+  </label>
+
+  <label>
+    <span>Description</span>
+    <%= form.text_area :description, rows: 4 %>
+  </label>
+
+  <div class="form-grid">
+    <label>
+      <span>Location</span>
+      <%= form.text_field :location %>
+    </label>
+
+    <label>
+      <span>Taken on</span>
+      <%= form.date_field :taken_on %>
+    </label>
+  </div>
+
+  <div class="form-checks">
+    <label>
+      <%= form.check_box :featured %>
+      <span>Featured</span>
+    </label>
+
+    <label>
+      <%= form.check_box :published %>
+      <span>Published</span>
+    </label>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "Save photo", class: "admin-button admin-button--primary" %>
+  </div>
+<% end %>

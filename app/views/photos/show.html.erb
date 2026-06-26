@@ -1,0 +1,20 @@
+<% content_for :title, "#{@photo.title} - Photos - 左刚华" %>
+
+<main class="site-main content-page photos-page">
+  <nav class="page-back">
+    <%= link_to "← Photos", photos_path %>
+  </nav>
+
+  <article class="photo-detail">
+    <figure>
+      <%= image_tag @photo.image_url, alt: @photo.title %>
+      <figcaption>
+        <time datetime="<%= @photo.taken_on&.iso8601 %>"><%= photo_meta(@photo) %></time>
+        <h1><%= @photo.title %></h1>
+        <% if @photo.description.present? %>
+          <p><%= @photo.description %></p>
+        <% end %>
+      </figcaption>
+    </figure>
+  </article>
+</main>

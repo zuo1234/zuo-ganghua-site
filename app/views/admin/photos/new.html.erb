@@ -1,0 +1,14 @@
+<% content_for :title, "New Photo - 左刚华" %>
+
+<main class="site-main content-page admin-page">
+  <nav class="page-back">
+    <%= link_to "← Manage photos", admin_photos_path %>
+  </nav>
+
+  <header class="content-header">
+    <h1>New Photo</h1>
+    <p>先用图片 URL 管理相册，后续可以升级为本地上传。</p>
+  </header>
+
+  <%= render "form", photo: @photo %>
+</main>

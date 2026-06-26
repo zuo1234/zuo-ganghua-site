@@ -1,0 +1,51 @@
+<% content_for :title, "Photos - 左刚华" %>
+
+<main class="site-main content-page photos-page" data-controller="gallery">
+  <nav class="page-back">
+    <%= link_to "← Home", root_path %>
+  </nav>
+
+  <header class="content-header photos-page__header">
+    <h1>Photos</h1>
+    <p>一些旅行、城市、工作间隙和生活里的画面。像技术文章一样，它们也是我记录上下文的一种方式。</p>
+  </header>
+
+  <% if @photos.any? %>
+    <div class="photo-grid">
+      <% @photos.each_with_index do |photo, index| %>
+        <article class="photo-card">
+          <button
+            class="photo-card__button"
+            type="button"
+            data-action="click->gallery#open"
+            data-gallery-index-param="<%= index %>"
+            data-gallery-title-param="<%= photo.title %>"
+            data-gallery-url-param="<%= photo.image_url %>"
+            data-gallery-meta-param="<%= photo_meta(photo) %>"
+          >
+            <%= image_tag photo.image_url, alt: photo.title, loading: "lazy" %>
+          </button>
+          <div class="photo-card__body">
+            <%= link_to photo.title, photo_path(photo) %>
+            <span><%= photo_meta(photo) %></span>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="empty-state">还没有发布的照片。</p>
+  <% end %>
+
+  <div class="gallery-lightbox" data-gallery-target="lightbox" aria-hidden="true">
+    <button class="gallery-lightbox__close" type="button" data-action="click->gallery#close" aria-label="关闭照片">×</button>
+    <button class="gallery-lightbox__nav" type="button" data-action="click->gallery#previous" aria-label="上一张">←</button>
+    <figure>
+      <img data-gallery-target="image" alt="">
+      <figcaption>
+        <strong data-gallery-target="title"></strong>
+        <span data-gallery-target="meta"></span>
+      </figcaption>
+    </figure>
+    <button class="gallery-lightbox__nav" type="button" data-action="click->gallery#next" aria-label="下一张">→</button>
+  </div>
+</main>

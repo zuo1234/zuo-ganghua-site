@@ -1,0 +1,14 @@
+<% content_for :title, "New Post - 左刚华" %>
+
+<main class="site-main content-page admin-page">
+  <nav class="page-back">
+    <%= link_to "← Manage posts", admin_posts_path %>
+  </nav>
+
+  <header class="content-header">
+    <h1>New Post</h1>
+    <p>先保存草稿，再预览和发布。</p>
+  </header>
+
+  <%= render "form", post: @post %>
+</main>

@@ -1,0 +1,35 @@
+<% content_for :title, "Preview #{@post.title} - 左刚华" %>
+
+<main class="site-main content-page admin-page">
+  <nav class="page-back">
+    <%= link_to "← Edit", edit_admin_post_path(@post) %>
+  </nav>
+
+  <%= render "admin/posts/notice" %>
+
+  <div class="preview-banner">
+    <span class="status-pill status-pill--<%= @post.status %>"><%= @post.status %></span>
+    <div class="admin-actions">
+      <% if @post.published? %>
+        <%= button_to "Unpublish", unpublish_admin_post_path(@post), method: :patch, class: "admin-button" %>
+        <%= link_to "View public", post_path(@post), class: "admin-button admin-button--primary" %>
+      <% else %>
+        <%= button_to "Publish", publish_admin_post_path(@post), method: :patch, class: "admin-button admin-button--primary" %>
+      <% end %>
+    </div>
+  </div>
+
+  <article class="post-article posts-page">
+    <header class="post-header">
+      <time datetime="<%= @post.display_date&.to_date&.iso8601 %>"><%= post_month(@post) %></time>
+      <h1><%= @post.title %></h1>
+      <% if @post.excerpt.present? %>
+        <p><%= @post.excerpt %></p>
+      <% end %>
+    </header>
+
+    <div class="post-body">
+      <%= simple_post_body(@post.body) %>
+    </div>
+  </article>
+</main>

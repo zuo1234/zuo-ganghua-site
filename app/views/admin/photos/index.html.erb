@@ -1,0 +1,49 @@
+<% content_for :title, "Manage Photos - 左刚华" %>
+
+<main class="site-main content-page admin-page">
+  <nav class="page-back">
+    <%= link_to "← Home", root_path %>
+  </nav>
+
+  <header class="content-header admin-header">
+    <div>
+      <h1>Manage Photos</h1>
+      <p>管理个人站相册里的照片、说明和发布状态。</p>
+    </div>
+    <%= link_to "New photo", new_admin_photo_path, class: "admin-button admin-button--primary" %>
+  </header>
+
+  <%= render "admin/posts/notice" %>
+
+  <div class="admin-list">
+    <% @photos.each do |photo| %>
+      <article class="admin-photo-row">
+        <%= image_tag photo.image_url, alt: photo.title, loading: "lazy" %>
+        <div>
+          <div class="admin-post-row__title">
+            <strong><%= photo.title %></strong>
+            <% if photo.featured? %>
+              <span class="status-pill status-pill--published">featured</span>
+            <% end %>
+            <span class="status-pill status-pill--<%= photo.published? ? "published" : "draft" %>">
+              <%= photo.published? ? "published" : "hidden" %>
+            </span>
+          </div>
+          <small>
+            <%= photo.slug %>
+            <% if photo_meta(photo).present? %>
+              · <%= photo_meta(photo) %>
+            <% end %>
+          </small>
+        </div>
+
+        <div class="admin-actions">
+          <% if photo.published? %>
+            <%= link_to "View", photo_path(photo), class: "admin-button" %>
+          <% end %>
+          <%= link_to "Edit", edit_admin_photo_path(photo), class: "admin-button admin-button--primary" %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+</main>

@@ -1,0 +1,21 @@
+<% content_for :title, "Edit #{@photo.title} - 左刚华" %>
+
+<main class="site-main content-page admin-page">
+  <nav class="page-back">
+    <%= link_to "← Manage photos", admin_photos_path %>
+  </nav>
+
+  <header class="content-header">
+    <h1>Edit Photo</h1>
+    <p><%= @photo.title %></p>
+  </header>
+
+  <%= render "admin/posts/notice" %>
+  <%= render "form", photo: @photo %>
+
+  <div class="danger-zone">
+    <h2>Danger zone</h2>
+    <p>删除照片记录不可恢复，但不会删除远程图片文件。</p>
+    <%= button_to "Delete photo", admin_photo_path(@photo), method: :delete, class: "admin-button admin-button--danger" %>
+  </div>
+</main>

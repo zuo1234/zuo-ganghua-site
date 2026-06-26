@@ -1,0 +1,624 @@
+import { Application, Controller } from "<%= asset_path "stimulus.min.js" %>"
+
+class ThemeController extends Controller {
+  static classes = ["dark"]
+
+  connect() {
+    const storedTheme = localStorage.getItem("theme")
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+
+    this.setDark(storedTheme === "dark" || (!storedTheme && prefersDark))
+  }
+
+  toggle() {
+    const nextDark = !this.element.classList.contains(this.darkClass)
+
+    this.setDark(nextDark)
+    localStorage.setItem("theme", nextDark ? "dark" : "light")
+  }
+
+  setDark(enabled) {
+    this.element.classList.toggle(this.darkClass, enabled)
+  }
+}
+
+class ArcadeController extends Controller {
+  static targets = ["tab", "title", "status", "score", "screen", "help"]
+  static values = {
+    initialGame: { type: String, default: "path" }
+  }
+
+  static rubordleWords = [
+    "RAILS",
+    "MODEL",
+    "ROUTE",
+    "SCOPE",
+    "YIELD",
+    "BLOCK",
+    "PARAM",
+    "CACHE",
+    "QUEUE",
+    "TURBO",
+    "VALID",
+    "FLASH"
+  ]
+
+  connect() {
+    this.game = this.initialGameValue
+    this.score = 0
+    this.running = false
+    this.pathPosition = { x: 0, y: 0 }
+    this.pathFiles = []
+    this.pathTraps = []
+    this.scanSequence = []
+    this.scanInput = []
+    this.logRound = null
+    this.rubordleGuesses = []
+    this.rubordleCurrent = ""
+    this.rubordleAnswer = this.rubordleDailyWord()
+    this.rubordleComplete = false
+
+    this.boundKeydown = this.handleKeydown.bind(this)
+    document.addEventListener("keydown", this.boundKeydown)
+    this.render()
+  }
+
+  disconnect() {
+    document.removeEventListener("keydown", this.boundKeydown)
+  }
+
+  selectGame(event) {
+    this.game = event.currentTarget.dataset.game
+    this.reset()
+  }
+
+  start() {
+    this.running = true
+    this.score = 0
+
+    if (this.game === "path") this.startPath()
+    if (this.game === "scan") this.startScan()
+    if (this.game === "logs") this.startLogs()
+    if (this.game === "rubordle") this.startRubordle()
+  }
+
+  reset() {
+    this.running = false
+    this.score = 0
+    this.scanSequence = []
+    this.scanInput = []
+    this.logRound = null
+    this.rubordleGuesses = []
+    this.rubordleCurrent = ""
+    this.rubordleAnswer = this.rubordleDailyWord()
+    this.rubordleComplete = false
+    this.render()
+  }
+
+  handleKeydown(event) {
+    if (!this.running) return
+
+    if (this.game === "path") this.handlePathKey(event)
+    if (this.game === "scan") this.handleScanKey(event)
+    if (this.game === "logs") this.handleLogKey(event)
+    if (this.game === "rubordle") this.handleRubordleKey(event)
+  }
+
+  startPath() {
+    this.pathPosition = { x: 0, y: 0 }
+    this.pathFiles = [
+      { x: 2, y: 1 },
+      { x: 5, y: 2 },
+      { x: 1, y: 4 },
+      { x: 6, y: 5 }
+    ]
+    this.pathTraps = [
+      { x: 3, y: 0 },
+      { x: 4, y: 3 },
+      { x: 2, y: 5 }
+    ]
+    this.render()
+    this.screenTarget.focus()
+  }
+
+  handlePathKey(event) {
+    const moves = {
+      ArrowUp: [0, -1],
+      ArrowRight: [1, 0],
+      ArrowDown: [0, 1],
+      ArrowLeft: [-1, 0],
+      w: [0, -1],
+      d: [1, 0],
+      s: [0, 1],
+      a: [-1, 0]
+    }
+    const move = moves[event.key]
+    if (!move) return
+
+    event.preventDefault()
+    const next = {
+      x: Math.max(0, Math.min(6, this.pathPosition.x + move[0])),
+      y: Math.max(0, Math.min(5, this.pathPosition.y + move[1]))
+    }
+
+    this.pathPosition = next
+    const fileIndex = this.pathFiles.findIndex((file) => file.x === next.x && file.y === next.y)
+    if (fileIndex >= 0) {
+      this.pathFiles.splice(fileIndex, 1)
+      this.score += 25
+    }
+
+    const hitTrap = this.pathTraps.some((trap) => trap.x === next.x && trap.y === next.y)
+    if (hitTrap) {
+      this.score = Math.max(0, this.score - 15)
+      this.statusTarget.textContent = "permission denied"
+    }
+
+    if (this.pathFiles.length === 0) {
+      this.running = false
+      this.score += 50
+      this.renderPath("deploy complete")
+      return
+    }
+
+    this.renderPath(hitTrap ? "trap hit" : "collect all files")
+  }
+
+  startScan() {
+    this.scanSequence = this.randomPorts(4)
+    this.scanInput = []
+    this.renderScan("memorize the open ports")
+    this.screenTarget.focus()
+  }
+
+  handleScanKey(event) {
+    if (!/^[1-4]$/.test(event.key)) return
+
+    event.preventDefault()
+    this.scanInput.push(Number(event.key))
+
+    const index = this.scanInput.length - 1
+    if (this.scanInput[index] !== this.scanSequence[index]) {
+      this.running = false
+      this.renderScan("scan failed")
+      return
+    }
+
+    if (this.scanInput.length === this.scanSequence.length) {
+      this.score += this.scanSequence.length * 20
+      this.scanSequence = this.randomPorts(Math.min(8, this.scanSequence.length + 1))
+      this.scanInput = []
+      this.renderScan("next sequence")
+      return
+    }
+
+    this.renderScan("keep going")
+  }
+
+  startLogs() {
+    this.nextLogRound("classify the log")
+    this.screenTarget.focus()
+  }
+
+  handleLogKey(event) {
+    const keyMap = {
+      e: "error",
+      w: "warn",
+      i: "info"
+    }
+    const answer = keyMap[event.key.toLowerCase()]
+    if (!answer || !this.logRound) return
+
+    event.preventDefault()
+    if (answer === this.logRound.kind) {
+      this.score += 15
+      this.nextLogRound("accepted")
+    } else {
+      this.score = Math.max(0, this.score - 10)
+      this.nextLogRound("wrong bucket")
+    }
+  }
+
+  render() {
+    this.updateTabs()
+    this.scoreTarget.textContent = this.score
+
+    if (this.game === "path") this.renderPath("ready")
+    if (this.game === "scan") this.renderScan("ready")
+    if (this.game === "logs") this.renderLogs("ready")
+    if (this.game === "rubordle") this.renderRubordle("ready")
+  }
+
+  updateTabs() {
+    this.tabTargets.forEach((tab) => {
+      tab.classList.toggle("is-active", tab.dataset.game === this.game)
+    })
+  }
+
+  renderPath(message) {
+    this.titleTarget.textContent = "PATHFIND"
+    this.statusTarget.textContent = message
+    this.scoreTarget.textContent = this.score
+    this.helpTarget.innerHTML = `
+      <h3>PATHFIND</h3>
+      <p>在小型文件系统里移动光标，收集所有 <code>file</code>，避开 <code>root</code> 陷阱。</p>
+      <dl>
+        <dt>Move</dt><dd>Arrow keys / WASD</dd>
+        <dt>Goal</dt><dd>收集 4 个文件</dd>
+      </dl>
+    `
+
+    const rows = []
+    for (let y = 0; y < 6; y += 1) {
+      const cells = []
+      for (let x = 0; x < 7; x += 1) {
+        if (this.pathPosition.x === x && this.pathPosition.y === y) {
+          cells.push("<span class=\"terminal-cell terminal-cell--player\">@</span>")
+        } else if (this.pathFiles.some((file) => file.x === x && file.y === y)) {
+          cells.push("<span class=\"terminal-cell terminal-cell--file\">*</span>")
+        } else if (this.pathTraps.some((trap) => trap.x === x && trap.y === y)) {
+          cells.push("<span class=\"terminal-cell terminal-cell--trap\">#</span>")
+        } else {
+          cells.push("<span class=\"terminal-cell\">.</span>")
+        }
+      }
+      rows.push(`<div class="terminal-grid__row">${cells.join("")}</div>`)
+    }
+
+    this.screenTarget.innerHTML = `
+      <div class="terminal-log">$ ./pathfind --collect ./files</div>
+      <div class="terminal-grid">${rows.join("")}</div>
+      <div class="terminal-legend">
+        <span>@ you</span><span>* file</span><span># root trap</span>
+      </div>
+    `
+  }
+
+  renderScan(message) {
+    this.titleTarget.textContent = "PORT SCAN"
+    this.statusTarget.textContent = message
+    this.scoreTarget.textContent = this.score
+    this.helpTarget.innerHTML = `
+      <h3>PORT SCAN</h3>
+      <p>记住高亮端口顺序，然后用数字键复现。每轮序列都会变长。</p>
+      <dl>
+        <dt>Input</dt><dd>数字键 1 / 2 / 3 / 4</dd>
+        <dt>Goal</dt><dd>尽可能通过更多轮扫描</dd>
+      </dl>
+    `
+
+    const ports = [1, 2, 3, 4].map((port) => {
+      const activeIndex = this.scanSequence.indexOf(port)
+      const submitted = this.scanInput.includes(port)
+      const label = ["ssh:22", "http:80", "db:5432", "redis:6379"][port - 1]
+      return `
+        <button type="button" class="port-node ${activeIndex >= 0 ? "is-open" : ""} ${submitted ? "is-submitted" : ""}">
+          <span>${port}</span>
+          ${label}
+        </button>
+      `
+    })
+
+    this.screenTarget.innerHTML = `
+      <div class="terminal-log">$ nmap --sequence localhost</div>
+      <div class="scan-sequence">open sequence: ${this.scanSequence.join(" ") || "run to generate"}</div>
+      <div class="port-grid">${ports.join("")}</div>
+      <div class="terminal-log">input: ${this.scanInput.join(" ") || "_"}</div>
+    `
+  }
+
+  renderLogs(message) {
+    this.titleTarget.textContent = "LOG PARSER"
+    this.statusTarget.textContent = message
+    this.scoreTarget.textContent = this.score
+    this.helpTarget.innerHTML = `
+      <h3>LOG PARSER</h3>
+      <p>读取当前日志行，并把它分到正确级别。连续判断会不断刷新日志。</p>
+      <dl>
+        <dt>Error</dt><dd>E</dd>
+        <dt>Warn</dt><dd>W</dd>
+        <dt>Info</dt><dd>I</dd>
+      </dl>
+    `
+
+    const round = this.logRound || {
+      kind: "info",
+      line: "INFO  boot sequence waiting for run command"
+    }
+
+    this.screenTarget.innerHTML = `
+      <div class="terminal-log">$ tail -f production.log</div>
+      <div class="log-line log-line--${round.kind}">${round.line}</div>
+      <div class="log-actions">
+        <button type="button" data-key="e">E error</button>
+        <button type="button" data-key="w">W warn</button>
+        <button type="button" data-key="i">I info</button>
+      </div>
+      <div class="terminal-log">Press E / W / I</div>
+    `
+
+    this.screenTarget.querySelectorAll(".log-actions button").forEach((button) => {
+      button.addEventListener("click", () => {
+        this.handleLogKey({ key: button.dataset.key, preventDefault() {} })
+      })
+    })
+  }
+
+  nextLogRound(message) {
+    const rounds = [
+      { kind: "error", line: "ERROR payment_job failed: retry budget exhausted" },
+      { kind: "warn", line: "WARN cache miss rate above 35% for /projects" },
+      { kind: "info", line: "INFO deploy finished in 42s with 0 failed checks" },
+      { kind: "warn", line: "WARN memory pressure detected on worker-02" },
+      { kind: "error", line: "ERROR ActionView::Template::Error missing avatar.png" },
+      { kind: "info", line: "INFO user opened terminal arcade session" }
+    ]
+    this.logRound = rounds[Math.floor(Math.random() * rounds.length)]
+    this.renderLogs(message)
+  }
+
+  randomPorts(length) {
+    return Array.from({ length }, () => Math.floor(Math.random() * 4) + 1)
+  }
+
+  startRubordle() {
+    this.rubordleGuesses = []
+    this.rubordleCurrent = ""
+    this.rubordleAnswer = this.rubordleDailyWord()
+    this.rubordleComplete = false
+    this.renderRubordle("guess the keyword")
+    this.screenTarget.focus()
+  }
+
+  handleRubordleKey(event) {
+    if (this.rubordleComplete) return
+
+    const key = event.key
+    const letter = key.toUpperCase()
+    if (/^[A-Z]$/.test(letter)) {
+      event.preventDefault()
+      if (this.rubordleCurrent.length < 5) {
+        this.rubordleCurrent += letter
+        this.renderRubordle("typing")
+      }
+      return
+    }
+
+    if (key === "Backspace") {
+      event.preventDefault()
+      this.rubordleCurrent = this.rubordleCurrent.slice(0, -1)
+      this.renderRubordle("typing")
+      return
+    }
+
+    if (key === "Enter") {
+      event.preventDefault()
+      this.submitRubordleGuess()
+    }
+  }
+
+  pressRubordleKey(event) {
+    this.handleRubordleKey({
+      key: event.currentTarget.dataset.key,
+      preventDefault() {}
+    })
+  }
+
+  submitRubordleGuess() {
+    if (this.rubordleCurrent.length !== 5) {
+      this.renderRubordle("need 5 letters")
+      return
+    }
+
+    this.rubordleGuesses.push(this.rubordleCurrent)
+    if (this.rubordleCurrent === this.rubordleAnswer) {
+      this.rubordleComplete = true
+      this.score += 120 - (this.rubordleGuesses.length - 1) * 15
+      this.renderRubordle("bundle green")
+      return
+    }
+
+    this.rubordleCurrent = ""
+    if (this.rubordleGuesses.length >= 6) {
+      this.rubordleComplete = true
+      this.renderRubordle(`answer: ${this.rubordleAnswer}`)
+      return
+    }
+
+    this.renderRubordle("try again")
+  }
+
+  renderRubordle(message) {
+    this.titleTarget.textContent = "RUBORDLE"
+    this.statusTarget.textContent = message
+    this.scoreTarget.textContent = this.score
+    this.helpTarget.innerHTML = `
+      <h3>RUBORDLE</h3>
+      <p>猜一个 5 字母 Ruby/Rails 关键词。每次提交后，方块会显示位置反馈。</p>
+      <dl>
+        <dt>Green</dt><dd>字母和位置都正确</dd>
+        <dt>Yellow</dt><dd>字母存在但位置不对</dd>
+        <dt>Gray</dt><dd>答案里没有这个字母</dd>
+      </dl>
+    `
+
+    this.screenTarget.innerHTML = `
+      <div class="terminal-log">$ rubordle --daily --tries=6</div>
+      <div class="rubordle-board">${this.rubordleRows()}</div>
+      <div class="rubordle-keyboard">${this.rubordleKeyboard()}</div>
+      <div class="terminal-log">Enter submit · Backspace delete · ${this.rubordleComplete ? `answer ${this.rubordleAnswer}` : "daily Ruby/Rails word"}</div>
+    `
+
+    this.screenTarget.querySelectorAll("[data-key]").forEach((button) => {
+      button.addEventListener("click", (event) => this.pressRubordleKey(event))
+    })
+  }
+
+  rubordleRows() {
+    const rows = []
+    for (let row = 0; row < 6; row += 1) {
+      const guess = this.rubordleGuesses[row]
+      const letters = guess || (row === this.rubordleGuesses.length ? this.rubordleCurrent : "")
+      const states = guess ? this.scoreRubordleGuess(guess) : []
+      const cells = []
+
+      for (let index = 0; index < 5; index += 1) {
+        const letter = letters[index] || ""
+        const state = states[index] || "empty"
+        cells.push(`<span class="rubordle-tile rubordle-tile--${state}">${letter}</span>`)
+      }
+
+      rows.push(`<div class="rubordle-row">${cells.join("")}</div>`)
+    }
+
+    return rows.join("")
+  }
+
+  rubordleKeyboard() {
+    const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
+    const stateByLetter = this.rubordleLetterStates()
+    const keyboardRows = rows.map((row) => {
+      const keys = row.split("").map((letter) => {
+        const state = stateByLetter[letter] || "unused"
+        return `<button type="button" class="rubordle-key rubordle-key--${state}" data-key="${letter}">${letter}</button>`
+      })
+
+      return `<div class="rubordle-key-row">${keys.join("")}</div>`
+    })
+
+    keyboardRows.push(`
+      <div class="rubordle-key-row">
+        <button type="button" class="rubordle-key rubordle-key--wide" data-key="Enter">Enter</button>
+        <button type="button" class="rubordle-key rubordle-key--wide" data-key="Backspace">Delete</button>
+      </div>
+    `)
+
+    return keyboardRows.join("")
+  }
+
+  scoreRubordleGuess(guess) {
+    const answer = this.rubordleAnswer.split("")
+    const result = Array(5).fill("absent")
+    const remaining = {}
+
+    answer.forEach((letter, index) => {
+      if (guess[index] === letter) {
+        result[index] = "correct"
+      } else {
+        remaining[letter] = (remaining[letter] || 0) + 1
+      }
+    })
+
+    guess.split("").forEach((letter, index) => {
+      if (result[index] === "correct") return
+      if (remaining[letter] > 0) {
+        result[index] = "present"
+        remaining[letter] -= 1
+      }
+    })
+
+    return result
+  }
+
+  rubordleLetterStates() {
+    const priority = {
+      unused: 0,
+      absent: 1,
+      present: 2,
+      correct: 3
+    }
+    const states = {}
+
+    this.rubordleGuesses.forEach((guess) => {
+      this.scoreRubordleGuess(guess).forEach((state, index) => {
+        const letter = guess[index]
+        const current = states[letter] || "unused"
+        if (priority[state] > priority[current]) states[letter] = state
+      })
+    })
+
+    return states
+  }
+
+  rubordleDailyWord() {
+    const start = new Date("2026-01-01T00:00:00Z")
+    const today = new Date()
+    const day = Math.floor((Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) - start.getTime()) / 86400000)
+    const words = this.constructor.rubordleWords
+
+    return words[((day % words.length) + words.length) % words.length]
+  }
+}
+
+class GalleryController extends Controller {
+  static targets = ["lightbox", "image", "title", "meta"]
+
+  connect() {
+    this.items = []
+    this.currentIndex = 0
+    this.boundKeydown = this.handleKeydown.bind(this)
+    this.refreshItems()
+  }
+
+  disconnect() {
+    document.removeEventListener("keydown", this.boundKeydown)
+  }
+
+  open(event) {
+    this.refreshItems()
+    this.currentIndex = Number(event.params.index || 0)
+    this.render()
+    this.lightboxTarget.classList.add("is-open")
+    this.lightboxTarget.setAttribute("aria-hidden", "false")
+    document.addEventListener("keydown", this.boundKeydown)
+  }
+
+  close() {
+    this.lightboxTarget.classList.remove("is-open")
+    this.lightboxTarget.setAttribute("aria-hidden", "true")
+    document.removeEventListener("keydown", this.boundKeydown)
+  }
+
+  previous() {
+    if (this.items.length === 0) return
+
+    this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length
+    this.render()
+  }
+
+  next() {
+    if (this.items.length === 0) return
+
+    this.currentIndex = (this.currentIndex + 1) % this.items.length
+    this.render()
+  }
+
+  handleKeydown(event) {
+    if (event.key === "Escape") this.close()
+    if (event.key === "ArrowLeft") this.previous()
+    if (event.key === "ArrowRight") this.next()
+  }
+
+  refreshItems() {
+    this.items = Array.from(this.element.querySelectorAll("[data-gallery-url-param]")).map((item) => ({
+      title: item.dataset.galleryTitleParam || "",
+      url: item.dataset.galleryUrlParam || "",
+      meta: item.dataset.galleryMetaParam || ""
+    }))
+  }
+
+  render() {
+    const item = this.items[this.currentIndex]
+    if (!item) return
+
+    this.imageTarget.src = item.url
+    this.imageTarget.alt = item.title
+    this.titleTarget.textContent = item.title
+    this.metaTarget.textContent = item.meta
+  }
+}
+
+window.Stimulus = Application.start()
+window.Stimulus.register("theme", ThemeController)
+window.Stimulus.register("arcade", ArcadeController)
+window.Stimulus.register("gallery", GalleryController)

@@ -1,0 +1,32 @@
+<% content_for :title, "Posts - 左刚华" %>
+
+<main class="site-main content-page posts-page">
+  <nav class="page-back">
+    <%= link_to "← Home", root_path %>
+  </nav>
+
+  <header class="content-header posts-page__header">
+    <h1>Posts</h1>
+    <p>关于后端工程、Ruby、Rails、Golang、系统设计，以及把想法做成可维护系统的记录。</p>
+  </header>
+
+  <% if @posts.any? %>
+    <div class="post-list">
+      <% @posts.each do |post| %>
+        <article class="post-list-item">
+          <%= link_to post_path(post) do %>
+            <span>
+              <strong><%= post.title %></strong>
+              <% if post.excerpt.present? %>
+                <small><%= post.excerpt %></small>
+              <% end %>
+            </span>
+            <time datetime="<%= post.display_date&.to_date&.iso8601 %>"><%= post_month(post) %></time>
+          <% end %>
+        </article>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="empty-state">还没有发布的帖子。</p>
+  <% end %>
+</main>

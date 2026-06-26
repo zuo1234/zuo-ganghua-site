@@ -1,0 +1,87 @@
+<% content_for :title, "Terminal Arcade - 左刚华" %>
+
+<main class="terminal-page scanlines" data-controller="arcade" data-arcade-initial-game-value="<%= @initial_game || "path" %>">
+  <section class="terminal-hero" aria-labelledby="games-title">
+    <div class="terminal-window terminal-window--intro">
+      <div class="terminal-window__bar" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <p class="terminal-kicker">~/zuoganghua.dev/games</p>
+      <h1 id="games-title" class="terminal-title">TERMINAL ARCADE</h1>
+      <p class="terminal-subtitle">
+        一组 Rails + Stimulus 驱动的终端小游戏。没有复杂引擎，只有键盘、反应和一点点运气。
+      </p>
+
+      <div class="terminal-command" aria-label="终端命令">
+        <span class="prompt">$</span>
+        <span>select_game --mode=play</span>
+        <span class="cursor" aria-hidden="true"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="arcade-shell" aria-label="小游戏控制台">
+    <div class="arcade-menu" role="tablist" aria-label="选择游戏">
+      <button class="arcade-tab is-active" type="button" data-arcade-target="tab" data-game="path" data-action="arcade#selectGame">
+        <span>01</span>
+        PATHFIND
+      </button>
+      <button class="arcade-tab" type="button" data-arcade-target="tab" data-game="scan" data-action="arcade#selectGame">
+        <span>02</span>
+        PORT SCAN
+      </button>
+      <button class="arcade-tab" type="button" data-arcade-target="tab" data-game="logs" data-action="arcade#selectGame">
+        <span>03</span>
+        LOG PARSER
+      </button>
+      <button class="arcade-tab" type="button" data-arcade-target="tab" data-game="rubordle" data-action="arcade#selectGame">
+        <span>04</span>
+        RUBORDLE
+      </button>
+    </div>
+
+    <div class="terminal-window terminal-game">
+      <div class="terminal-window__bar" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <div class="terminal-game__header">
+        <div>
+          <p class="terminal-kicker" data-arcade-target="status">Ready</p>
+          <h2 data-arcade-target="title">PATHFIND</h2>
+        </div>
+        <div class="terminal-score">
+          <span>score</span>
+          <strong data-arcade-target="score">0</strong>
+        </div>
+      </div>
+
+      <div class="terminal-output" data-arcade-target="screen" tabindex="0" aria-live="polite"></div>
+
+      <div class="terminal-actions">
+        <button type="button" data-action="arcade#start">Run</button>
+        <button type="button" data-action="arcade#reset">Reset</button>
+      </div>
+    </div>
+
+    <aside class="terminal-window terminal-help">
+      <div class="terminal-window__bar" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <p class="terminal-kicker">man arcade</p>
+      <div data-arcade-target="help"></div>
+    </aside>
+  </section>
+
+  <nav class="terminal-back" aria-label="返回">
+    <%= link_to "← back to home", root_path %>
+  </nav>
+</main>

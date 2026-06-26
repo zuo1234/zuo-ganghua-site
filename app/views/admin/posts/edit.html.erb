@@ -1,0 +1,21 @@
+<% content_for :title, "Edit #{@post.title} - 左刚华" %>
+
+<main class="site-main content-page admin-page">
+  <nav class="page-back">
+    <%= link_to "← Manage posts", admin_posts_path %>
+  </nav>
+
+  <header class="content-header">
+    <h1>Edit Post</h1>
+    <p><%= @post.title %></p>
+  </header>
+
+  <%= render "admin/posts/notice" %>
+  <%= render "form", post: @post %>
+
+  <div class="danger-zone">
+    <h2>Danger zone</h2>
+    <p>删除文章不可恢复。确认不需要后再执行。</p>
+    <%= button_to "Delete post", admin_post_path(@post), method: :delete, class: "admin-button admin-button--danger" %>
+  </div>
+</main>

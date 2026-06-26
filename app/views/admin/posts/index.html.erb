@@ -1,0 +1,47 @@
+<% content_for :title, "Manage Posts - 左刚华" %>
+
+<main class="site-main content-page admin-page">
+  <nav class="page-back">
+    <%= link_to "← Home", root_path %>
+  </nav>
+
+  <header class="content-header admin-header">
+    <div>
+      <h1>Manage Posts</h1>
+      <p>新建、编辑、预览、发布你的个人站文章。</p>
+    </div>
+    <%= link_to "New post", new_admin_post_path, class: "admin-button admin-button--primary" %>
+  </header>
+
+  <%= render "admin/posts/notice" %>
+
+  <div class="admin-list">
+    <% @posts.each do |post| %>
+      <article class="admin-post-row">
+        <div>
+          <div class="admin-post-row__title">
+            <strong><%= post.title %></strong>
+            <span class="status-pill status-pill--<%= post.status %>"><%= post.status %></span>
+          </div>
+          <small>
+            <%= post.slug %>
+            <% if post.published_at.present? %>
+              · published <%= post_month(post) %>
+            <% end %>
+          </small>
+        </div>
+
+        <div class="admin-actions">
+          <%= link_to "Preview", preview_admin_post_path(post), class: "admin-button" %>
+          <%= link_to "Edit", edit_admin_post_path(post), class: "admin-button" %>
+          <% if post.published? %>
+            <%= button_to "Unpublish", unpublish_admin_post_path(post), method: :patch, class: "admin-button" %>
+            <%= link_to "View", post_path(post), class: "admin-button" %>
+          <% else %>
+            <%= button_to "Publish", publish_admin_post_path(post), method: :patch, class: "admin-button admin-button--primary" %>
+          <% end %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+</main>

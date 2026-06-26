@@ -1,0 +1,21 @@
+<% content_for :title, "#{@post.title} - 左刚华" %>
+
+<main class="site-main content-page posts-page">
+  <nav class="page-back">
+    <%= link_to "← Posts", posts_path %>
+  </nav>
+
+  <article class="post-article">
+    <header class="post-header">
+      <time datetime="<%= @post.display_date&.to_date&.iso8601 %>"><%= post_month(@post) %></time>
+      <h1><%= @post.title %></h1>
+      <% if @post.excerpt.present? %>
+        <p><%= @post.excerpt %></p>
+      <% end %>
+    </header>
+
+    <div class="post-body">
+      <%= simple_post_body(@post.body) %>
+    </div>
+  </article>
+</main>
