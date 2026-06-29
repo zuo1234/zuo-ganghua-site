@@ -1,19 +1,23 @@
 # syntax=docker/dockerfile:1
 
 ARG RUBY_VERSION=2.7.7
-ARG BASE_IMAGE=swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/debian:bullseye-slim
-ARG DEBIAN_MIRROR=https://mirrors.huaweicloud.com/debian
+ARG BASE_IMAGE=swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/ubuntu:24.04
+ARG OPENSSL_VERSION=1.1.1w
+ARG UBUNTU_MIRROR=https://mirrors.huaweicloud.com/ubuntu
 ARG RUBY_DOWNLOAD_URL=https://cache.ruby-lang.org/pub/ruby/2.7/ruby-2.7.7.tar.gz
 ARG RUBYGEMS_MIRROR=https://mirrors.huaweicloud.com/repository/rubygems
 
 FROM ${BASE_IMAGE} AS ruby-build
 
 ARG RUBY_VERSION
-ARG DEBIAN_MIRROR
+ARG OPENSSL_VERSION
+ARG UBUNTU_MIRROR
 ARG RUBY_DOWNLOAD_URL
 ARG RUBYGEMS_MIRROR
 
-RUN sed -i "s|http://deb.debian.org/debian|${DEBIAN_MIRROR}|g; s|http://security.debian.org/debian-security|${DEBIAN_MIRROR}-security|g" /etc/apt/sources.list && \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN sed -i "s|http://archive.ubuntu.com/ubuntu|${UBUNTU_MIRROR}|g; s|http://security.ubuntu.com/ubuntu|${UBUNTU_MIRROR}|g" /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true && \
     apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       build-essential \
@@ -23,25 +27,33 @@ RUN sed -i "s|http://deb.debian.org/debian|${DEBIAN_MIRROR}|g; s|http://security
       libgdbm-dev \
       libncurses5-dev \
       libreadline-dev \
-      libssl-dev \
       libyaml-dev \
       zlib1g-dev && \
+    curl -fsSL "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz" -o /tmp/openssl.tar.gz && \
+    mkdir -p /tmp/openssl-src && \
+    tar -xzf /tmp/openssl.tar.gz -C /tmp/openssl-src --strip-components=1 && \
+    cd /tmp/openssl-src && \
+    ./config --prefix=/usr/local/openssl-1.1 --openssldir=/usr/local/openssl-1.1 shared zlib && \
+    make -j"$(nproc)" && \
+    make install_sw && \
     curl -fsSL "${RUBY_DOWNLOAD_URL}" -o /tmp/ruby.tar.gz && \
     mkdir -p /tmp/ruby-src && \
     tar -xzf /tmp/ruby.tar.gz -C /tmp/ruby-src --strip-components=1 && \
     cd /tmp/ruby-src && \
-    ./configure --prefix=/usr/local --disable-install-doc && \
+    ./configure --prefix=/usr/local --disable-install-doc --with-openssl-dir=/usr/local/openssl-1.1 && \
     make -j"$(nproc)" && \
     make install && \
     gem sources --clear-all && \
     gem sources --add "${RUBYGEMS_MIRROR}" && \
     gem update --system 3.1.6 && \
     gem install bundler -v 2.1.4 && \
-    rm -rf /tmp/ruby.tar.gz /tmp/ruby-src /var/lib/apt/lists /var/cache/apt/archives
+    rm -rf /tmp/openssl.tar.gz /tmp/openssl-src /tmp/ruby.tar.gz /tmp/ruby-src /var/lib/apt/lists /var/cache/apt/archives
 
 FROM ${BASE_IMAGE} AS base
 
-ARG DEBIAN_MIRROR
+ARG UBUNTU_MIRROR
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 COPY --from=ruby-build /usr/local /usr/local
 
@@ -56,17 +68,16 @@ ENV BUNDLE_DEPLOYMENT=1 \
     RAILS_LOG_TO_STDOUT=1 \
     RAILS_SERVE_STATIC_FILES=1
 
-RUN sed -i "s|http://deb.debian.org/debian|${DEBIAN_MIRROR}|g; s|http://security.debian.org/debian-security|${DEBIAN_MIRROR}-security|g" /etc/apt/sources.list && \
+RUN sed -i "s|http://archive.ubuntu.com/ubuntu|${UBUNTU_MIRROR}|g; s|http://security.ubuntu.com/ubuntu|${UBUNTU_MIRROR}|g" /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true && \
     apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       ca-certificates \
       curl \
-      libffi7 \
-      libgdbm6 \
+      libffi8 \
+      libgdbm6t64 \
       libncurses6 \
-      libreadline8 \
+      libreadline8t64 \
       libsqlite3-0 \
-      libssl1.1 \
       libyaml-0-2 \
       tzdata \
       zlib1g && \

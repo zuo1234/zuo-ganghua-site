@@ -40,15 +40,18 @@ Build the image:
 docker build -t zuo-ganghua-site .
 ```
 
-The Dockerfile defaults to a Huawei Cloud SWR Debian base image, Huawei Cloud
-APT/Rubygems mirrors, and builds Ruby 2.7.7 inside the image. This avoids
-pulling the official `ruby:*` image from Docker Hub on Huawei Cloud servers. To
-use a different SWR region, private mirrored base image, or internal mirrors:
+The Dockerfile defaults to a Huawei Cloud SWR Ubuntu base image, Huawei Cloud
+APT/Rubygems mirrors, and builds Ruby 2.7.7 inside the image. It uses Ubuntu
+24.04 to match the server and builds OpenSSL 1.1.1w separately for Ruby 2.7.7
+compatibility. This avoids pulling the official `ruby:*` image from Docker Hub
+on Huawei Cloud servers. To use a different SWR region, private mirrored base
+image, or internal mirrors:
 
 ```sh
 docker build \
-  --build-arg BASE_IMAGE=swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/debian:bullseye-slim \
-  --build-arg DEBIAN_MIRROR=https://mirrors.huaweicloud.com/debian \
+  --build-arg BASE_IMAGE=swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/ubuntu:24.04 \
+  --build-arg OPENSSL_VERSION=1.1.1w \
+  --build-arg UBUNTU_MIRROR=https://mirrors.huaweicloud.com/ubuntu \
   --build-arg RUBYGEMS_MIRROR=https://mirrors.huaweicloud.com/repository/rubygems \
   --build-arg RUBY_DOWNLOAD_URL=https://cache.ruby-lang.org/pub/ruby/2.7/ruby-2.7.7.tar.gz \
   -t zuo-ganghua-site .
