@@ -1,6 +1,5 @@
 
-ARG RUBY_VERSION=2.7.7
-FROM ruby:${RUBY_VERSION}-slim
+FROM ruby:2.7.7
 
 WORKDIR /rails
 
@@ -12,11 +11,7 @@ ENV BUNDLE_PATH=/usr/local/bundle \
 
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
-      build-essential \
-      curl \
-      libsqlite3-0 \
       libsqlite3-dev \
-      pkg-config \
       tzdata && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
