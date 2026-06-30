@@ -8,7 +8,7 @@ COPY Gemfile Gemfile.lock ./
 
 RUN gem sources --remove https://rubygems.org/
 RUN gem sources --remove https://gems.ruby-china.com/
-RUN gem source -a https://mirrors.tuna.tsinghua.edu.cn/rubygems/ && gem install foreman && bundle install
+RUN gem source -a https://mirrors.aliyun.com/rubygems/ && bundle install
 
 COPY . .
 
