@@ -8,7 +8,10 @@
   <%= render "admin/posts/notice" %>
 
   <div class="preview-banner">
-    <span class="status-pill status-pill--<%= @post.status %>"><%= @post.status %></span>
+    <div class="admin-post-row__title">
+      <span class="status-pill status-pill--<%= @post.status %>"><%= @post.status %></span>
+      <span class="status-pill status-pill--tag"><%= @post.tag_label %></span>
+    </div>
     <div class="admin-actions">
       <% if @post.published? %>
         <%= button_to "Unpublish", unpublish_admin_post_path(@post), method: :patch, class: "admin-button" %>
@@ -21,7 +24,10 @@
 
   <article class="post-article posts-page">
     <header class="post-header">
-      <time datetime="<%= @post.display_date&.to_date&.iso8601 %>"><%= post_month(@post) %></time>
+      <div class="post-meta">
+        <time datetime="<%= @post.display_date&.to_date&.iso8601 %>"><%= post_month(@post) %></time>
+        <span><%= @post.tag_label %></span>
+      </div>
       <h1><%= @post.title %></h1>
       <% if @post.excerpt.present? %>
         <p><%= @post.excerpt %></p>

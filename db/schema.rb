@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_18_102000) do
+ActiveRecord::Schema[7.0].define(version: 2026_07_01_090000) do
   create_table "photos", force: :cascade do |t|
     t.string "title", null: false
     t.string "slug", null: false
@@ -35,8 +35,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_18_102000) do
     t.datetime "published_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "tag", default: 0, null: false
     t.index ["slug"], name: "index_posts_on_slug", unique: true
     t.index ["status", "published_at"], name: "index_posts_on_status_and_published_at"
+    t.index ["tag", "status", "published_at"], name: "index_posts_on_tag_and_status_and_published_at"
   end
 
 end

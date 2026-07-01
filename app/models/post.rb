@@ -1,20 +1,34 @@
 class Post < ApplicationRecord
   STATUSES = %w[draft published].freeze
+  TAG_LABELS = {
+    "technical_development" => "技术开发",
+    "life_notes" => "生活随记"
+  }.freeze
+
+  enum tag: {
+    technical_development: 0,
+    life_notes: 1
+  }
 
   before_validation :normalize_slug
   before_validation :clear_published_at, if: :draft?
   before_validation :set_published_at, if: :publishing_now?
 
-  validates :title, :slug, :body, :status, presence: true
+  validates :title, :slug, :body, :status, :tag, presence: true
   validates :slug, uniqueness: true
   validates :slug, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/, message: "only allows lowercase letters, numbers, and hyphens" }
   validates :status, inclusion: { in: STATUSES }
 
   scope :published, -> { where(status: "published").where.not(published_at: nil).order(published_at: :desc) }
   scope :recent_first, -> { order(Arel.sql("COALESCE(published_at, updated_at) DESC")) }
+  scope :with_tag, ->(tag) { where(tag: tags.fetch(tag)) }
 
   def self.find_published!(slug)
     published.find_by!(slug: slug)
+  end
+
+  def self.tag_options
+    tags.keys.map { |tag| [TAG_LABELS.fetch(tag), tag] }
   end
 
   def draft?
@@ -35,6 +49,10 @@ class Post < ApplicationRecord
 
   def display_date
     published_at || updated_at || created_at
+  end
+
+  def tag_label
+    TAG_LABELS.fetch(tag)
   end
 
   def to_param

@@ -22,6 +22,7 @@
           <div class="admin-post-row__title">
             <strong><%= post.title %></strong>
             <span class="status-pill status-pill--<%= post.status %>"><%= post.status %></span>
+            <span class="status-pill status-pill--tag"><%= post.tag_label %></span>
           </div>
           <small>
             <%= post.slug %>

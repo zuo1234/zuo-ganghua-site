@@ -8,6 +8,7 @@ posts = [
 
       我希望这个站点记录的不只是结果，也包括过程里的选择：为什么做、怎么判断优先级、哪些方案被放弃，以及下一步准备改什么。
     BODY
+    tag: "life_notes",
     status: "published",
     published_at: Time.zone.parse("2026-06-01 10:00")
   },
@@ -20,6 +21,7 @@ posts = [
 
       我会优先整理三个层面：能快速开始工作的环境、能留下上下文的记录方式，以及能减少重复动作的小工具。它们不需要复杂，但要稳定。
     BODY
+    tag: "life_notes",
     status: "published",
     published_at: Time.zone.parse("2026-05-12 09:30")
   },
@@ -32,6 +34,7 @@ posts = [
 
       检查清单里会包括空状态、错误提示、移动端布局、性能、表单校验、SEO 信息，以及一个最重要的问题：这个版本是否真的能帮用户完成一件事。
     BODY
+    tag: "life_notes",
     status: "draft"
   },
   {
@@ -49,6 +52,7 @@ posts = [
 
       一个 Rails 后端是否稳定，很多时候取决于边界是不是朴素。controller 不偷偷做业务，model 不承担整个世界，service 不变成万能脚本，job 不假设自己永远只跑一次。
     BODY
+    tag: "technical_development",
     status: "published",
     published_at: Time.zone.parse("2026-06-14 10:00")
   },
@@ -67,6 +71,7 @@ posts = [
 
       最后我会看迁移里的索引是否匹配真实读取路径。很多 Rails 性能问题并不是框架慢，而是数据增长以后，原本没有成本感的查询突然变成了全表扫描。
     BODY
+    tag: "technical_development",
     status: "published",
     published_at: Time.zone.parse("2026-06-10 09:30")
   },
@@ -85,6 +90,7 @@ posts = [
 
       Go 服务写得好不好，不只看 goroutine 用得多不多，而是看并发边界是否清晰、资源释放是否可靠、失败路径是否和成功路径一样被认真设计。
     BODY
+    tag: "technical_development",
     status: "published",
     published_at: Time.zone.parse("2026-06-06 11:00")
   },
@@ -103,6 +109,7 @@ posts = [
 
       真正有效的排障不是一次英雄式操作，而是一套可重复的流程：定位影响面，找到止血方式，恢复服务，然后补上监控、测试和文档，让同类问题下次更早暴露。
     BODY
+    tag: "technical_development",
     status: "draft"
   }
 ]

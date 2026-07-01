@@ -8,6 +8,12 @@
   <header class="content-header posts-page__header">
     <h1>Posts</h1>
     <p>关于后端工程、Ruby、Rails、Golang、系统设计，以及把想法做成可维护系统的记录。</p>
+    <nav class="post-tag-filter" aria-label="文章标签筛选">
+      <%= link_to "全部", posts_path, class: ["post-tag-filter__item", ("is-active" if @selected_tag.blank?)] %>
+      <% Post.tag_options.each do |label, tag| %>
+        <%= link_to label, posts_path(tag: tag), class: ["post-tag-filter__item", ("is-active" if @selected_tag == tag)] %>
+      <% end %>
+    </nav>
   </header>
 
   <% if @posts.any? %>
@@ -16,6 +22,7 @@
         <article class="post-list-item">
           <%= link_to post_path(post) do %>
             <span>
+              <small class="post-list-item__tag"><%= post.tag_label %></small>
               <strong><%= post.title %></strong>
               <% if post.excerpt.present? %>
                 <small><%= post.excerpt %></small>

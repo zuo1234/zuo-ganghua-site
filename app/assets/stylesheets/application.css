@@ -491,6 +491,33 @@ h2 {
   line-height: 1.8;
 }
 
+.post-tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1.35rem;
+}
+
+.post-tag-filter__item {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.82rem;
+  padding: 0.36rem 0.72rem;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.post-tag-filter__item:hover,
+.post-tag-filter__item.is-active {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+
 .post-list {
   display: grid;
   gap: 1.35rem;
@@ -510,6 +537,14 @@ h2 {
   font-weight: 400;
   line-height: 1.45;
   transition: color 160ms ease;
+}
+
+.post-list-item small.post-list-item__tag {
+  display: inline-block;
+  margin-bottom: 0.22rem;
+  color: var(--accent-alt);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.78rem;
 }
 
 .post-list-item small {
@@ -535,12 +570,19 @@ h2 {
   margin-bottom: 2.5rem;
 }
 
-.post-header time {
-  display: block;
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.8rem;
+  align-items: center;
   margin-bottom: 0.9rem;
   color: var(--soft);
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.9rem;
+}
+
+.post-meta span {
+  color: var(--accent-alt);
 }
 
 .post-header h1 {
@@ -868,6 +910,11 @@ h2 {
 .status-pill--draft {
   border-color: color-mix(in srgb, var(--accent-third) 40%, var(--line));
   color: var(--accent-third);
+}
+
+.status-pill--tag {
+  border-color: color-mix(in srgb, var(--accent-alt) 38%, var(--line));
+  color: var(--accent-alt);
 }
 
 .admin-actions,

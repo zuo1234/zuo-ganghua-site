@@ -39,6 +39,13 @@
     </label>
 
     <label>
+      <span>Tag</span>
+      <%= form.select :tag, Post.tag_options %>
+    </label>
+  </div>
+
+  <div class="form-grid">
+    <label>
       <span>Published at</span>
       <%= form.datetime_local_field :published_at %>
     </label>

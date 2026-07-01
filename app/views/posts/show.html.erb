@@ -7,7 +7,10 @@
 
   <article class="post-article">
     <header class="post-header">
-      <time datetime="<%= @post.display_date&.to_date&.iso8601 %>"><%= post_month(@post) %></time>
+      <div class="post-meta">
+        <time datetime="<%= @post.display_date&.to_date&.iso8601 %>"><%= post_month(@post) %></time>
+        <span><%= @post.tag_label %></span>
+      </div>
       <h1><%= @post.title %></h1>
       <% if @post.excerpt.present? %>
         <p><%= @post.excerpt %></p>

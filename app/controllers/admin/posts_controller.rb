@@ -11,7 +11,7 @@ module Admin
     end
 
     def new
-      @post = Post.new(status: "draft")
+      @post = Post.new(status: "draft", tag: "technical_development")
     end
 
     def create
@@ -67,7 +67,7 @@ module Admin
     end
 
     def post_params
-      params.require(:post).permit(:title, :slug, :excerpt, :body, :status, :published_at)
+      params.require(:post).permit(:title, :slug, :excerpt, :body, :status, :tag, :published_at)
     end
 
     def normalize_commit_action
