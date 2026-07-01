@@ -41,8 +41,19 @@
       <button type="button" title="有序列表" data-action="rich-text#format" data-rich-text-command-param="insertOrderedList">1. List</button>
       <button type="button" title="代码块" data-action="rich-text#format" data-rich-text-command-param="formatBlock" data-rich-text-value-param="pre">Code</button>
       <button type="button" title="链接" data-action="rich-text#link">Link</button>
+      <button type="button" title="上传图片" data-action="rich-text#chooseImage">Image</button>
+      <button type="button" title="小图" data-action="rich-text#setImageSize" data-rich-text-size-param="small">Small</button>
+      <button type="button" title="中图" data-action="rich-text#setImageSize" data-rich-text-size-param="medium">Medium</button>
+      <button type="button" title="全宽图" data-action="rich-text#setImageSize" data-rich-text-size-param="full">Full</button>
       <button type="button" title="清除格式" data-action="rich-text#clear">Clear</button>
     </div>
+    <input
+      type="file"
+      class="rich-text-file-input"
+      accept="image/*"
+      data-rich-text-target="fileInput"
+      data-action="change->rich-text#uploadImage"
+    >
     <div
       class="rich-text-editor"
       contenteditable="true"
@@ -53,6 +64,7 @@
       data-rich-text-target="editor"
       data-action="input->rich-text#sync blur->rich-text#sync paste->rich-text#handlePaste"
     ></div>
+    <span class="rich-text-status" data-rich-text-target="status" aria-live="polite"></span>
     <%= form.hidden_field :body, required: true, data: { rich_text_target: "input" } %>
   </div>
 

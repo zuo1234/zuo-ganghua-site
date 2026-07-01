@@ -833,17 +833,20 @@ class GalleryController extends Controller {
 }
 
 class RichTextController extends Controller {
-  static targets = ["editor", "input"]
+  static targets = ["editor", "fileInput", "input", "status"]
 
   connect() {
     this.editorTarget.innerHTML = this.inputTarget.value || ""
     this.form = this.element.closest("form")
     this.boundSync = this.sync.bind(this)
+    this.boundRememberImage = this.rememberImage.bind(this)
     this.form?.addEventListener("submit", this.boundSync)
+    this.editorTarget.addEventListener("click", this.boundRememberImage)
   }
 
   disconnect() {
     this.form?.removeEventListener("submit", this.boundSync)
+    this.editorTarget.removeEventListener("click", this.boundRememberImage)
   }
 
   format(event) {
@@ -877,6 +880,65 @@ class RichTextController extends Controller {
     this.sync()
   }
 
+  chooseImage(event) {
+    event.preventDefault()
+
+    this.fileInputTarget.click()
+  }
+
+  async uploadImage() {
+    const file = this.fileInputTarget.files[0]
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      this.setStatus("只能上传图片文件。", true)
+      this.fileInputTarget.value = ""
+      return
+    }
+
+    const formData = new FormData()
+    formData.append("image", file)
+    this.setStatus("图片上传中...")
+
+    try {
+      const response = await fetch("/admin/uploads", {
+        method: "POST",
+        headers: {
+          "X-CSRF-Token": this.csrfToken(),
+          "Accept": "application/json"
+        },
+        body: formData
+      })
+      const payload = await response.json()
+
+      if (!response.ok) {
+        throw new Error(payload.error || "图片上传失败。")
+      }
+
+      this.insertImage(payload.url, payload.alt || payload.filename || file.name)
+      this.setStatus("图片已插入。")
+    } catch (error) {
+      this.setStatus(error.message || "图片上传失败。", true)
+    } finally {
+      this.fileInputTarget.value = ""
+    }
+  }
+
+  setImageSize(event) {
+    event.preventDefault()
+
+    const figure = this.currentFigure()
+    if (!figure) {
+      this.setStatus("请先点击正文中的图片。", true)
+      return
+    }
+
+    const size = event.params.size || "full"
+    this.applyImageSize(figure, size)
+    this.setStatus(`图片尺寸已调整为 ${this.imageSizeLabel(size)}。`)
+    this.sync()
+  }
+
   clear(event) {
     event.preventDefault()
 
@@ -898,8 +960,70 @@ class RichTextController extends Controller {
   }
 
   sync() {
-    const html = this.editorTarget.innerHTML.trim()
+    const html = this.cleanEditorHtml().trim()
     this.inputTarget.value = this.isBlankHtml(html) ? "" : html
+  }
+
+  cleanEditorHtml() {
+    const clone = this.editorTarget.cloneNode(true)
+    clone.querySelectorAll("figure.is-selected").forEach((figure) => {
+      figure.classList.remove("is-selected")
+      if (!figure.getAttribute("class")) {
+        figure.removeAttribute("class")
+      }
+    })
+    return clone.innerHTML
+  }
+
+  insertImage(url, alt) {
+    this.editorTarget.focus()
+    const safeUrl = this.escapeAttribute(url)
+    const safeAlt = this.escapeAttribute(alt)
+    const figure = [
+      `<figure class="post-image--full">`,
+      `<img src="${safeUrl}" alt="${safeAlt}" loading="lazy">`,
+      `<figcaption>${this.escapeHtml(alt)}</figcaption>`,
+      "</figure>",
+      "<p><br></p>"
+    ].join("")
+
+    document.execCommand("insertHTML", false, figure)
+    this.sync()
+  }
+
+  rememberImage(event) {
+    const image = event.target.closest("img")
+    if (!image || !this.editorTarget.contains(image)) return
+
+    this.selectedFigure = image.closest("figure")
+    this.editorTarget.querySelectorAll("figure.is-selected").forEach((figure) => {
+      figure.classList.remove("is-selected")
+    })
+    this.selectedFigure?.classList.add("is-selected")
+    this.setStatus("已选中图片，可调整尺寸。")
+  }
+
+  currentFigure() {
+    if (this.selectedFigure && this.editorTarget.contains(this.selectedFigure)) {
+      return this.selectedFigure
+    }
+
+    const selectionNode = window.getSelection()?.anchorNode
+    const element = selectionNode?.nodeType === Node.ELEMENT_NODE ? selectionNode : selectionNode?.parentElement
+    return element?.closest?.("figure")
+  }
+
+  applyImageSize(figure, size) {
+    figure.classList.remove("post-image--small", "post-image--medium", "post-image--full")
+    figure.classList.add(`post-image--${size}`)
+  }
+
+  imageSizeLabel(size) {
+    return {
+      small: "小图",
+      medium: "中图",
+      full: "全宽"
+    }[size] || "全宽"
   }
 
   blockValue(value) {
@@ -932,6 +1056,17 @@ class RichTextController extends Controller {
 
   escapeAttribute(value) {
     return this.escapeHtml(value).replace(/`/g, "&#96;")
+  }
+
+  csrfToken() {
+    return document.querySelector("meta[name='csrf-token']")?.content || ""
+  }
+
+  setStatus(message, isError = false) {
+    if (!this.hasStatusTarget) return
+
+    this.statusTarget.textContent = message
+    this.statusTarget.classList.toggle("is-error", isError)
   }
 }
 

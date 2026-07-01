@@ -7,6 +7,7 @@ Rails.application.routes.draw do
 
   namespace :admin do
     resources :photos, param: :slug
+    resources :uploads, only: [:create]
     resources :posts, param: :slug do
       member do
         get :preview

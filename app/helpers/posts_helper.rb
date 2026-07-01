@@ -17,7 +17,7 @@ module PostsHelper
     sanitize(
       body.to_s.gsub(%r{<(script|style)\b[^>]*>.*?</\1>}im, ""),
       tags: %w[p div br strong em b i u h2 h3 blockquote ul ol li a code pre figure figcaption img],
-      attributes: %w[href rel target src alt loading]
+      attributes: %w[href rel target src alt loading class]
     )
   end
 

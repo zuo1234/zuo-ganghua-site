@@ -692,6 +692,34 @@ h2 {
   margin: 1.6rem 0;
 }
 
+.post-body figure.post-image--small,
+.rich-text-editor figure.post-image--small {
+  max-width: 22rem;
+}
+
+.post-body figure.post-image--medium,
+.rich-text-editor figure.post-image--medium {
+  max-width: 34rem;
+}
+
+.post-body figure.post-image--full,
+.rich-text-editor figure.post-image--full {
+  max-width: none;
+}
+
+.post-body figure.post-image--small,
+.post-body figure.post-image--medium,
+.rich-text-editor figure.post-image--small,
+.rich-text-editor figure.post-image--medium {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.rich-text-editor figure.is-selected {
+  outline: 2px solid color-mix(in srgb, var(--accent) 64%, transparent);
+  outline-offset: 4px;
+}
+
 .post-body img,
 .rich-text-editor img {
   display: block;
@@ -1138,6 +1166,10 @@ h2 {
   outline: none;
 }
 
+.rich-text-file-input {
+  display: none;
+}
+
 .rich-text-editor {
   min-height: 22rem;
   overflow-y: auto;
@@ -1169,6 +1201,16 @@ h2 {
 
 .rich-text-editor p + p {
   margin-top: 1rem;
+}
+
+.rich-text-status {
+  min-height: 1.2rem;
+  color: var(--soft);
+  font-size: 0.82rem;
+}
+
+.rich-text-status.is-error {
+  color: #d44;
 }
 
 .form-grid {
@@ -1917,6 +1959,13 @@ body:has(.terminal-page) .theme-toggle:focus-visible {
   .photo-grid,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .post-body figure.post-image--small,
+  .post-body figure.post-image--medium,
+  .rich-text-editor figure.post-image--small,
+  .rich-text-editor figure.post-image--medium {
+    max-width: none;
   }
 
   .admin-header,
