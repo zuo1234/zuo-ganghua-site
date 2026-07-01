@@ -832,7 +832,111 @@ class GalleryController extends Controller {
   }
 }
 
+class RichTextController extends Controller {
+  static targets = ["editor", "input"]
+
+  connect() {
+    this.editorTarget.innerHTML = this.inputTarget.value || ""
+    this.form = this.element.closest("form")
+    this.boundSync = this.sync.bind(this)
+    this.form?.addEventListener("submit", this.boundSync)
+  }
+
+  disconnect() {
+    this.form?.removeEventListener("submit", this.boundSync)
+  }
+
+  format(event) {
+    event.preventDefault()
+
+    const command = event.params.command
+    const value = this.blockValue(event.params.value)
+
+    this.editorTarget.focus()
+    document.execCommand(command, false, value)
+    this.sync()
+  }
+
+  link(event) {
+    event.preventDefault()
+
+    const currentSelection = window.getSelection()?.toString()
+    const url = window.prompt("URL", "https://")
+    if (!url || url === "https://") return
+
+    if (!currentSelection) {
+      document.execCommand("insertHTML", false, `<a href="${this.escapeAttribute(url)}">${this.escapeHtml(url)}</a>`)
+    } else {
+      document.execCommand("createLink", false, url)
+    }
+
+    this.editorTarget.querySelectorAll("a").forEach((link) => {
+      link.setAttribute("target", "_blank")
+      link.setAttribute("rel", "noreferrer")
+    })
+    this.sync()
+  }
+
+  clear(event) {
+    event.preventDefault()
+
+    this.editorTarget.focus()
+    if (window.getSelection()?.toString()) {
+      document.execCommand("removeFormat", false, null)
+    } else {
+      this.editorTarget.innerHTML = this.textToParagraphHtml(this.editorTarget.textContent)
+    }
+    this.sync()
+  }
+
+  handlePaste(event) {
+    event.preventDefault()
+
+    const text = event.clipboardData.getData("text/plain")
+    document.execCommand("insertHTML", false, this.textToParagraphHtml(text))
+    this.sync()
+  }
+
+  sync() {
+    const html = this.editorTarget.innerHTML.trim()
+    this.inputTarget.value = this.isBlankHtml(html) ? "" : html
+  }
+
+  blockValue(value) {
+    return value ? `<${value}>` : null
+  }
+
+  textToParagraphHtml(text) {
+    return text
+      .trim()
+      .split(/\n{2,}/)
+      .filter((paragraph) => paragraph.trim().length > 0)
+      .map((paragraph) => `<p>${this.escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`)
+      .join("")
+  }
+
+  isBlankHtml(html) {
+    const text = this.editorTarget.textContent.replace(/\u00a0/g, " ").trim()
+    return !text && html.replace(/<br\s*\/?>/gi, "").replace(/&nbsp;/gi, "").trim() === ""
+  }
+
+  escapeHtml(value) {
+    return value.replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;"
+    }[character]))
+  }
+
+  escapeAttribute(value) {
+    return this.escapeHtml(value).replace(/`/g, "&#96;")
+  }
+}
+
 window.Stimulus = Application.start()
 window.Stimulus.register("theme", ThemeController)
 window.Stimulus.register("arcade", ArcadeController)
 window.Stimulus.register("gallery", GalleryController)
+window.Stimulus.register("rich-text", RichTextController)

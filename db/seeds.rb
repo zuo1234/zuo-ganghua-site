@@ -1,5 +1,35 @@
 posts = [
   {
+    title: "傍晚把工作台收拾干净",
+    slug: "evening-desk-notes",
+    excerpt: "一段普通傍晚的记录：关掉需求、整理笔记，也给自己留一点安静。",
+    body: <<~BODY,
+      <figure>
+        <img src="/images/posts/evening-desk-notes.png" alt="傍晚窗边的工作台，电脑、茶杯和红色笔记本" loading="lazy">
+        <figcaption>傍晚的工作台：电脑还亮着，笔记本合上，城市慢慢暗下来。</figcaption>
+      </figure>
+
+      <p>今天下班前，我把最后一个接口的异常分支重新看了一遍。不是很大的改动，但它像桌面上一根没理顺的线：放着也能运行，收好以后心里会安静很多。</p>
+
+      <p>我越来越喜欢在傍晚收尾。白天适合推进任务，晚上适合把事情放回合适的位置：commit message 写清楚，临时想法记进笔记，明天要继续的上下文留在最容易看见的地方。</p>
+
+      <blockquote>软件工程里很多真正有用的习惯，并不锋利，只是稳定。</blockquote>
+
+      <h2>今天留下的三个小记录</h2>
+
+      <ul>
+        <li>不要等问题变大才整理边界，代码里小小的含糊会慢慢长成沟通成本。</li>
+        <li>一个好用的工作台不需要摆满工具，关键是下一次坐下来时能马上开始。</li>
+        <li>写生活随记也像写代码注释：不用解释一切，只要把当时的判断和感受留下来。</li>
+      </ul>
+
+      <p>关电脑之前，我看了一眼窗外。城市灯光亮起来的时候，白天那些很硬的任务好像也软了一点。明天还会继续写 Ruby、Rails、Golang，也会继续修那些不起眼但重要的小地方。</p>
+    BODY
+    tag: "life_notes",
+    status: "published",
+    published_at: Time.zone.parse("2026-07-01 20:30")
+  },
+  {
     title: "把个人站当成长期作品，而不是一次性简历",
     slug: "personal-site-as-a-long-term-project",
     excerpt: "关于持续更新、项目记录和内容结构。",
