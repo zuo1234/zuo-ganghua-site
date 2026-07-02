@@ -1,4 +1,3 @@
-
 FROM ruby:2.7.7
 
 WORKDIR /rails
@@ -9,17 +8,11 @@ ENV BUNDLE_PATH=/usr/local/bundle \
     RAILS_LOG_TO_STDOUT=1 \
     RAILS_SERVE_STATIC_FILES=1
 
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-      libsqlite3-dev \
-      tzdata && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 COPY Gemfile Gemfile.lock ./
 
 RUN bundle config set mirror.https://rubygems.org https://mirrors.aliyun.com/rubygems/ && \
-    bundle install && \
-    rm -rf ~/.bundle "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
+    bundle install
 
 COPY . .
 
