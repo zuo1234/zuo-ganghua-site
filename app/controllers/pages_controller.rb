@@ -18,4 +18,8 @@ class PagesController < ApplicationController
 
     render :games
   end
+
+  def tools; end
+
+  def image_resize; end
 end

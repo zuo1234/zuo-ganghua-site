@@ -1,0 +1,291 @@
+<% content_for :title, "Image Resize - Tools - 左刚华" %>
+
+<main class="site-main content-page tools-page" data-controller="image-resize">
+  <nav class="tools-nav" aria-label="工具页导航">
+    <%= link_to "ZUOGH", root_path, class: "tools-nav__brand" %>
+
+    <div class="tools-nav__links">
+      <%= link_to "/about", root_path(anchor: "intro-title") %>
+      <%= link_to "/projects", root_path(anchor: "projects") %>
+      <%= link_to "/journal", posts_path %>
+      <%= link_to "/tools", tools_path, class: "is-active" %>
+      <%= link_to "/contact", "mailto:hello@example.com" %>
+    </div>
+  </nav>
+
+  <div class="tools-breadcrumb">
+    <%= link_to "← All tools", tools_path %>
+  </div>
+
+  <header class="tools-hero" aria-labelledby="image-resize-title">
+    <div>
+      <p class="eyebrow tools-hero__eyebrow">/tools/image-resize</p>
+      <h1 id="image-resize-title">Image Resize</h1>
+      <p class="tools-hero__subtitle">Resize images without leaving the browser.</p>
+    </div>
+
+    <p class="tools-status" data-image-resize-target="status" role="status">
+      Runs locally. Your files never leave the browser.
+    </p>
+  </header>
+
+  <section class="tools-workbench" aria-label="图片调整工具">
+    <section class="tools-panel">
+      <button
+        class="upload-dropzone"
+        type="button"
+        data-image-resize-target="dropzone"
+        data-action="click->image-resize#browse dragenter->image-resize#dragEnter dragover->image-resize#dragOver dragleave->image-resize#dragLeave drop->image-resize#drop"
+      >
+        <span class="upload-dropzone__icon" aria-hidden="true">+</span>
+        <span class="upload-dropzone__copy">
+          <strong>Upload</strong>
+          <span>Drag &amp; drop an image here, or click to browse.</span>
+          <small>PNG, JPG, WebP, AVIF up to your browser limit.</small>
+        </span>
+      </button>
+
+      <input
+        hidden
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/avif"
+        data-image-resize-target="fileInput"
+        data-action="change->image-resize#loadFromInput"
+      >
+
+      <section class="image-size-panel" aria-labelledby="image-size-title">
+        <div class="image-size-panel__header">
+          <h2 id="image-size-title">图像尺寸</h2>
+          <label class="tool-field tool-field--preset">
+            <span class="tool-field__label">适合</span>
+            <select
+              disabled
+              data-image-resize-target="fitSelect resizeControl"
+              data-action="change->image-resize#applyFit"
+            >
+              <option value="custom">自定义</option>
+              <option value="original">原始尺寸</option>
+              <option value="half">50%</option>
+              <option value="double">2x</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="image-size-form">
+          <label class="tool-field">
+            <span class="tool-field__label">宽度</span>
+            <span class="tool-input">
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value="1200"
+                disabled
+                data-image-resize-target="widthInput resizeControl"
+                data-action="input->image-resize#resizeFromWidth blur->image-resize#resizeFromWidth"
+              >
+            </span>
+          </label>
+
+          <label class="tool-field">
+            <span class="tool-field__label">高度</span>
+            <span class="tool-input">
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value="800"
+                disabled
+                data-image-resize-target="heightInput resizeControl"
+                data-action="input->image-resize#resizeFromHeight blur->image-resize#resizeFromHeight"
+              >
+            </span>
+          </label>
+
+          <label class="tool-field tool-field--unit">
+            <span class="tool-field__label">单位</span>
+            <select
+              disabled
+              data-image-resize-target="unitSelect resizeControl"
+              data-action="change->image-resize#changeUnit"
+            >
+              <option value="px">像素</option>
+              <option value="cm">厘米</option>
+              <option value="in">英寸</option>
+            </select>
+          </label>
+
+          <label class="tool-field tool-field--resolution">
+            <span class="tool-field__label">分辨率</span>
+            <span class="tool-input tool-input--with-suffix">
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value="72"
+                disabled
+                data-image-resize-target="resolutionInput resizeControl"
+                data-action="input->image-resize#changeResolution blur->image-resize#changeResolution"
+              >
+              <span>像素/英寸</span>
+            </span>
+          </label>
+
+          <div class="image-size-options">
+            <label class="ratio-toggle">
+              <input
+                checked
+                type="checkbox"
+                disabled
+                data-image-resize-target="lockInput resizeControl"
+                data-action="change->image-resize#toggleLock"
+              >
+              <span>比例缩放</span>
+            </label>
+
+            <label class="ratio-toggle">
+              <input
+                checked
+                type="checkbox"
+                disabled
+                data-image-resize-target="resampleInput resizeControl"
+                data-action="change->image-resize#toggleResample"
+              >
+              <span>重新采样图像</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <div class="export-row">
+        <button
+          class="export-button export-button--png"
+          type="button"
+          disabled
+          data-image-resize-target="resizeControl"
+          data-image-resize-format-param="png"
+          data-action="click->image-resize#export"
+        >
+          Export PNG
+        </button>
+
+        <button
+          class="export-button export-button--webp"
+          type="button"
+          disabled
+          data-image-resize-target="resizeControl"
+          data-image-resize-format-param="webp"
+          data-action="click->image-resize#export"
+        >
+          Export WebP
+        </button>
+      </div>
+
+      <p class="tools-panel__hint">
+        分辨率会参与厘米/英寸和像素之间的换算；浏览器导出时主要改变像素尺寸，部分图片查看器可能不会保留 DPI 元数据。
+      </p>
+    </section>
+
+    <section class="tools-preview">
+      <div class="tools-preview__workspace">
+        <figure class="preview-card">
+          <figcaption class="preview-card__header">
+            <span>Original</span>
+            <small data-image-resize-target="originalBadge">--</small>
+          </figcaption>
+
+          <div class="preview-frame">
+            <img data-image-resize-target="originalImage" alt="">
+          </div>
+        </figure>
+
+        <figure class="preview-card">
+          <figcaption class="preview-card__header">
+            <span>Resized</span>
+            <small data-image-resize-target="resizedBadge">--</small>
+          </figcaption>
+
+          <div class="preview-frame preview-frame--canvas">
+            <canvas data-image-resize-target="canvas"></canvas>
+          </div>
+        </figure>
+      </div>
+
+      <dl class="tools-output">
+        <div class="tools-output__summary">
+          <dt>结果大小</dt>
+          <dd data-image-resize-target="resultSummary">--</dd>
+          <p data-image-resize-target="resultSizeDetail">上传图片后显示预计导出体积。</p>
+        </div>
+        <div class="tools-output__row">
+          <dt>调整前尺寸</dt>
+          <dd data-image-resize-target="originalDimensions">--</dd>
+        </div>
+        <div class="tools-output__row">
+          <dt>调整后尺寸</dt>
+          <dd data-image-resize-target="resizedDimensions">--</dd>
+        </div>
+        <div class="tools-output__row">
+          <dt>缩放比例</dt>
+          <dd data-image-resize-target="scaleValue">--</dd>
+        </div>
+        <div class="tools-output__row">
+          <dt>调整前大小</dt>
+          <dd data-image-resize-target="originalFileSize">--</dd>
+        </div>
+        <div class="tools-output__row">
+          <dt>调整后大小</dt>
+          <dd data-image-resize-target="estimatedFileSize">--</dd>
+        </div>
+        <div class="tools-output__row">
+          <dt>预计 PNG</dt>
+          <dd data-image-resize-target="estimatedPngSize">--</dd>
+        </div>
+        <div class="tools-output__row">
+          <dt>预计 WebP</dt>
+          <dd data-image-resize-target="estimatedWebpSize">--</dd>
+        </div>
+        <div class="tools-output__row">
+          <dt>最近导出</dt>
+          <dd data-image-resize-target="lastExportFormat">Not exported yet</dd>
+        </div>
+      </dl>
+    </section>
+  </section>
+
+  <section class="section tools-roadmap-section" aria-labelledby="tools-roadmap-title">
+    <div class="section__header">
+      <h2 id="tools-roadmap-title">More tools coming soon</h2>
+    </div>
+
+    <div class="tools-roadmap">
+      <article class="tool-roadmap__item">
+        <div class="tool-roadmap__icon" aria-hidden="true">::</div>
+        <div>
+          <strong>Palette Extract</strong>
+          <p>从图片中提取主色和辅助色，方便整理配色灵感或快速起草视觉稿。</p>
+        </div>
+        <span class="tool-roadmap__status">Planned</span>
+      </article>
+
+      <article class="tool-roadmap__item">
+        <div class="tool-roadmap__icon" aria-hidden="true">[]</div>
+        <div>
+          <strong>Compress</strong>
+          <p>用更顺手的方式控制体积和清晰度，适合发文章、传封面图或站点资源优化。</p>
+        </div>
+        <span class="tool-roadmap__status">Planned</span>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer site-footer--compact">
+  <nav class="footer-links" aria-label="工具页页脚链接">
+    <%= link_to "Home", root_path %>
+    <%= link_to "Writing", posts_path %>
+    <%= link_to "Photos", photos_path %>
+    <%= link_to "Tools", tools_path %>
+    <%= link_to "Email", "mailto:hello@example.com" %>
+  </nav>
+</footer>

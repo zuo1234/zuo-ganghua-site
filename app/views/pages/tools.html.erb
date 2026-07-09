@@ -1,0 +1,59 @@
+<% content_for :title, "Tools - 左刚华" %>
+
+<main class="site-main content-page tools-page tools-index-page">
+  <nav class="tools-nav" aria-label="工具页导航">
+    <%= link_to "ZUOGH", root_path, class: "tools-nav__brand" %>
+
+    <div class="tools-nav__links">
+      <%= link_to "/about", root_path(anchor: "intro-title") %>
+      <%= link_to "/projects", root_path(anchor: "projects") %>
+      <%= link_to "/journal", posts_path %>
+      <%= link_to "/tools", tools_path, class: "is-active" %>
+      <%= link_to "/contact", "mailto:hello@example.com" %>
+    </div>
+  </nav>
+
+  <header class="tools-hero tools-index-hero" aria-labelledby="tools-title">
+    <div>
+      <p class="eyebrow tools-hero__eyebrow">/tools</p>
+      <h1 id="tools-title">Tools</h1>
+      <p class="tools-hero__subtitle">一些会在日常开发、写作和内容整理里反复用到的小工具。</p>
+    </div>
+
+    <p class="tools-status">
+      Current tools are browser-first. Most work happens locally on your device.
+    </p>
+  </header>
+
+  <section class="tools-catalog" aria-label="工具列表">
+    <%= link_to image_resize_tool_path, class: "tool-card tool-card--active" do %>
+      <span class="tool-card__icon" aria-hidden="true">[]</span>
+      <span class="tool-card__content">
+        <span class="tool-card__meta">Image utility</span>
+        <strong>Image Resize</strong>
+        <span>在浏览器里调整图片尺寸，支持比例锁定、PNG 和 WebP 导出。</span>
+      </span>
+      <span class="tool-card__action">Open -&gt;</span>
+    <% end %>
+
+    <article class="tool-card tool-card--placeholder">
+      <span class="tool-card__icon" aria-hidden="true">+</span>
+      <span class="tool-card__content">
+        <span class="tool-card__meta">Coming later</span>
+        <strong>More tools</strong>
+        <span>之后新增的工具会继续放在这里，保持一个统一入口。</span>
+      </span>
+      <span class="tool-card__action">Planned</span>
+    </article>
+  </section>
+</main>
+
+<footer class="site-footer site-footer--compact">
+  <nav class="footer-links" aria-label="工具页页脚链接">
+    <%= link_to "Home", root_path %>
+    <%= link_to "Writing", posts_path %>
+    <%= link_to "Photos", photos_path %>
+    <%= link_to "Tools", tools_path %>
+    <%= link_to "Email", "mailto:hello@example.com" %>
+  </nav>
+</footer>

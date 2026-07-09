@@ -1070,8 +1070,542 @@ class RichTextController extends Controller {
   }
 }
 
+class ImageResizeController extends Controller {
+  static targets = [
+    "dropzone",
+    "fileInput",
+    "fitSelect",
+    "widthInput",
+    "heightInput",
+    "unitSelect",
+    "resolutionInput",
+    "lockInput",
+    "resampleInput",
+    "originalImage",
+    "canvas",
+    "status",
+    "originalDimensions",
+    "resizedDimensions",
+    "scaleValue",
+    "resultSummary",
+    "resultSizeDetail",
+    "originalFileSize",
+    "estimatedFileSize",
+    "estimatedPngSize",
+    "estimatedWebpSize",
+    "lastExportFormat",
+    "originalBadge",
+    "resizedBadge",
+    "preset",
+    "resizeControl"
+  ]
+
+  connect() {
+    this.image = null
+    this.originalFile = null
+    this.originalUrl = null
+    this.dragDepth = 0
+    this.currentUnit = "px"
+    this.ppi = 72
+    this.currentPixels = { width: 1200, height: 800 }
+    this.estimateToken = 0
+    this.renderState()
+    this.resetOutputState()
+    this.updateDimensionInputs()
+  }
+
+  disconnect() {
+    if (this.originalUrl) URL.revokeObjectURL(this.originalUrl)
+  }
+
+  browse(event) {
+    event.preventDefault()
+    this.fileInputTarget.click()
+  }
+
+  dragEnter(event) {
+    event.preventDefault()
+    this.dragDepth += 1
+    this.dropzoneTarget.classList.add("is-dragging")
+  }
+
+  dragOver(event) {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = "copy"
+    this.dropzoneTarget.classList.add("is-dragging")
+  }
+
+  dragLeave(event) {
+    event.preventDefault()
+    this.dragDepth = Math.max(0, this.dragDepth - 1)
+
+    if (this.dragDepth === 0) {
+      this.dropzoneTarget.classList.remove("is-dragging")
+    }
+  }
+
+  drop(event) {
+    event.preventDefault()
+    this.dragDepth = 0
+    this.dropzoneTarget.classList.remove("is-dragging")
+
+    const file = Array.from(event.dataTransfer.files || []).find((item) => item.type.startsWith("image/"))
+    if (!file) {
+      this.setStatus("Please drop an image file.", true)
+      return
+    }
+
+    this.loadFile(file)
+  }
+
+  loadFromInput() {
+    const file = this.fileInputTarget.files[0]
+    this.fileInputTarget.value = ""
+
+    if (!file) return
+
+    this.loadFile(file)
+  }
+
+  async loadFile(file) {
+    if (!file.type.startsWith("image/")) {
+      this.setStatus("Only image files are supported here.", true)
+      return
+    }
+
+    const url = URL.createObjectURL(file)
+    this.setStatus("Loading image...")
+
+    try {
+      const image = await this.loadImage(url)
+
+      if (this.originalUrl) URL.revokeObjectURL(this.originalUrl)
+
+      this.originalUrl = url
+      this.originalFile = file
+      this.image = image
+      this.aspectRatio = image.naturalWidth / image.naturalHeight
+      this.currentUnit = "px"
+      this.ppi = 72
+      this.originalImageTarget.src = url
+      this.originalImageTarget.alt = file.name
+      this.unitSelectTarget.value = this.currentUnit
+      this.resolutionInputTarget.value = this.ppi
+      this.fitSelectTarget.value = "original"
+
+      this.setPixelDimensions(image.naturalWidth, image.naturalHeight, "original")
+      this.activatePreset("original")
+      this.resetOutputState()
+      this.renderCanvas()
+      this.renderState()
+      this.setStatus(`Loaded ${file.name}. Adjust the size, then export PNG or WebP.`)
+    } catch (error) {
+      URL.revokeObjectURL(url)
+      this.setStatus("This image could not be read by the browser.", true)
+    }
+  }
+
+  resizeFromWidth() {
+    if (!this.hasImage()) return
+
+    const width = this.pixelsFromDisplayValue(this.widthInputTarget.value, this.currentPixels.width)
+    const height = this.lockInputTarget.checked ?
+      Math.max(1, Math.round(width / this.aspectRatio)) :
+      this.pixelsFromDisplayValue(this.heightInputTarget.value, this.currentPixels.height)
+
+    this.setPixelDimensions(width, height, "custom")
+    this.afterDimensionChange()
+  }
+
+  resizeFromHeight() {
+    if (!this.hasImage()) return
+
+    const height = this.pixelsFromDisplayValue(this.heightInputTarget.value, this.currentPixels.height)
+    const width = this.lockInputTarget.checked ?
+      Math.max(1, Math.round(height * this.aspectRatio)) :
+      this.pixelsFromDisplayValue(this.widthInputTarget.value, this.currentPixels.width)
+
+    this.setPixelDimensions(width, height, "custom")
+    this.afterDimensionChange()
+  }
+
+  toggleLock() {
+    if (!this.hasImage()) return
+
+    if (this.lockInputTarget.checked) {
+      const width = this.pixelsFromDisplayValue(this.widthInputTarget.value, this.currentPixels.width)
+      this.setPixelDimensions(width, Math.max(1, Math.round(width / this.aspectRatio)), "custom")
+    }
+
+    this.afterDimensionChange()
+  }
+
+  toggleResample() {
+    if (!this.hasImage()) return
+
+    this.resetOutputState()
+    this.renderCanvas()
+    this.setStatus(this.resampleInputTarget.checked ? "Resampling enabled." : "Resampling disabled.")
+  }
+
+  changeUnit() {
+    if (!this.hasImage()) return
+
+    this.currentUnit = this.unitSelectTarget.value
+    this.updateDimensionInputs()
+    this.renderCanvas()
+  }
+
+  changeResolution() {
+    if (!this.hasImage()) return
+
+    const previousUnit = this.currentUnit
+    const currentWidthValue = Number.parseFloat(this.widthInputTarget.value)
+    const currentHeightValue = Number.parseFloat(this.heightInputTarget.value)
+    this.ppi = this.normalizedResolution(this.resolutionInputTarget.value)
+    this.resolutionInputTarget.value = this.ppi
+
+    if (previousUnit !== "px" && Number.isFinite(currentWidthValue) && Number.isFinite(currentHeightValue)) {
+      const width = this.pixelsFromDisplayValue(currentWidthValue, this.currentPixels.width)
+      const height = this.lockInputTarget.checked ?
+        Math.max(1, Math.round(width / this.aspectRatio)) :
+        this.pixelsFromDisplayValue(currentHeightValue, this.currentPixels.height)
+      this.setPixelDimensions(width, height, "custom")
+    } else {
+      this.updateDimensionInputs()
+    }
+
+    this.afterDimensionChange()
+  }
+
+  applyFit() {
+    if (!this.hasImage()) return
+
+    this.applyPresetValue(this.fitSelectTarget.value)
+  }
+
+  applyPreset(event) {
+    if (!this.hasImage()) {
+      this.setStatus("Upload an image first.", true)
+      return
+    }
+
+    this.applyPresetValue(event.params.preset, event.currentTarget.textContent.trim())
+  }
+
+  applyPresetValue(preset, label = null) {
+    if (preset === "custom") {
+      this.setStatus("Custom size is active.")
+      return
+    }
+
+    let width = this.image.naturalWidth
+    let height = this.image.naturalHeight
+
+    if (preset === "double") {
+      width = this.image.naturalWidth * 2
+      height = this.image.naturalHeight * 2
+    }
+
+    if (preset === "half") {
+      width = Math.max(1, Math.round(this.image.naturalWidth / 2))
+      height = Math.max(1, Math.round(this.image.naturalHeight / 2))
+    }
+
+    this.setPixelDimensions(width, height, preset)
+    this.fitSelectTarget.value = preset || "custom"
+    this.activatePreset(preset)
+    this.resetOutputState()
+    this.renderCanvas()
+    this.setStatus(label ? `Preset ${label} applied.` : "Image size updated.")
+  }
+
+  async export(event) {
+    if (!this.hasImage()) {
+      this.setStatus("Upload an image first.", true)
+      return
+    }
+
+    const format = (event.params.format || "png").toLowerCase()
+    const mimeType = format === "webp" ? "image/webp" : "image/png"
+
+    this.setStatus(`Preparing ${format.toUpperCase()}...`)
+
+    try {
+      const blob = await this.canvasToBlob(mimeType, format === "webp" ? 0.92 : undefined)
+      if (format === "webp" && blob.type !== "image/webp") {
+        throw new Error("This browser could not export WebP from canvas.")
+      }
+
+      const filename = this.downloadName(format)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = filename
+      link.click()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+
+      this.lastExportFormatTarget.textContent = `${format.toUpperCase()} · ${filename} · ${this.humanFileSize(blob.size)}`
+      this.setStatus(`${filename} downloaded.`)
+    } catch (error) {
+      this.setStatus(error.message || "Export failed.", true)
+    }
+  }
+
+  renderState() {
+    const ready = this.hasImage()
+
+    this.resizeControlTargets.forEach((element) => {
+      element.disabled = !ready
+    })
+  }
+
+  renderCanvas() {
+    if (!this.hasImage()) return
+
+    const { width, height } = this.currentDimensions()
+    const context = this.canvasTarget.getContext("2d")
+
+    this.canvasTarget.width = width
+    this.canvasTarget.height = height
+    context.clearRect(0, 0, width, height)
+    context.imageSmoothingEnabled = this.resampleInputTarget.checked
+    if (context.imageSmoothingEnabled) context.imageSmoothingQuality = "high"
+    context.drawImage(this.image, 0, 0, width, height)
+
+    this.originalDimensionsTarget.textContent = `${this.image.naturalWidth} x ${this.image.naturalHeight} px`
+    this.resizedDimensionsTarget.textContent = this.dimensionSummary(width, height)
+    this.scaleValueTarget.textContent = this.scaleLabel(width, height)
+    this.resultSummaryTarget.textContent = this.scaleLabel(width, height)
+    this.originalFileSizeTarget.textContent = this.humanFileSize(this.originalFile?.size || 0)
+    this.originalBadgeTarget.textContent = `${this.image.naturalWidth} x ${this.image.naturalHeight}`
+    this.resizedBadgeTarget.textContent = `${width} x ${height}`
+    this.estimateOutputSizes()
+  }
+
+  afterDimensionChange() {
+    this.activatePreset(this.matchingPreset())
+    this.fitSelectTarget.value = this.matchingPreset() || "custom"
+    this.resetOutputState()
+    this.renderCanvas()
+  }
+
+  matchingPreset() {
+    if (!this.hasImage()) return null
+
+    const { width, height } = this.currentDimensions()
+    const original = width === this.image.naturalWidth && height === this.image.naturalHeight
+    const doubled = width === this.image.naturalWidth * 2 && height === this.image.naturalHeight * 2
+    const halved = width === Math.max(1, Math.round(this.image.naturalWidth / 2)) &&
+      height === Math.max(1, Math.round(this.image.naturalHeight / 2))
+
+    if (original) return "original"
+    if (doubled) return "double"
+    if (halved) return "half"
+
+    return null
+  }
+
+  activatePreset(name) {
+    this.presetTargets.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.imageResizePresetParam === name)
+    })
+  }
+
+  hasImage() {
+    return Boolean(this.image)
+  }
+
+  currentDimensions() {
+    return {
+      width: this.currentPixels.width,
+      height: this.currentPixels.height
+    }
+  }
+
+  setPixelDimensions(width, height, preset = "custom") {
+    this.currentPixels = {
+      width: this.normalizedDimension(width, this.image?.naturalWidth || 1200),
+      height: this.normalizedDimension(height, this.image?.naturalHeight || 800)
+    }
+    this.updateDimensionInputs()
+    this.fitSelectTarget.value = preset || "custom"
+  }
+
+  normalizedDimension(value, fallback) {
+    const parsed = Number.parseInt(value, 10)
+    if (!Number.isFinite(parsed) || parsed < 1) return fallback
+
+    return Math.min(parsed, 12000)
+  }
+
+  normalizedResolution(value) {
+    const parsed = Number.parseInt(value, 10)
+    if (!Number.isFinite(parsed) || parsed < 1) return 72
+
+    return Math.min(parsed, 1200)
+  }
+
+  resetOutputState() {
+    if (this.hasEstimatedFileSizeTarget) this.estimatedFileSizeTarget.textContent = "--"
+    if (this.hasEstimatedPngSizeTarget) this.estimatedPngSizeTarget.textContent = "--"
+    if (this.hasEstimatedWebpSizeTarget) this.estimatedWebpSizeTarget.textContent = "--"
+    if (this.hasResultSizeDetailTarget) this.resultSizeDetailTarget.textContent = "上传图片后显示预计导出体积。"
+    this.lastExportFormatTarget.textContent = "Not exported yet"
+  }
+
+  updateDimensionInputs() {
+    if (!this.hasWidthInputTarget || !this.hasHeightInputTarget) return
+
+    const width = this.displayValueFromPixels(this.currentPixels.width)
+    const height = this.displayValueFromPixels(this.currentPixels.height)
+    const step = this.currentUnit === "px" ? "1" : "0.01"
+
+    this.widthInputTarget.step = step
+    this.heightInputTarget.step = step
+    this.widthInputTarget.value = this.formatDisplayDimension(width)
+    this.heightInputTarget.value = this.formatDisplayDimension(height)
+  }
+
+  displayValueFromPixels(pixels) {
+    if (this.currentUnit === "in") return pixels / this.ppi
+    if (this.currentUnit === "cm") return (pixels / this.ppi) * 2.54
+
+    return pixels
+  }
+
+  pixelsFromDisplayValue(value, fallback) {
+    const parsed = Number.parseFloat(value)
+    if (!Number.isFinite(parsed) || parsed <= 0) return fallback
+
+    if (this.currentUnit === "in") return this.normalizedDimension(Math.round(parsed * this.ppi), fallback)
+    if (this.currentUnit === "cm") return this.normalizedDimension(Math.round((parsed / 2.54) * this.ppi), fallback)
+
+    return this.normalizedDimension(Math.round(parsed), fallback)
+  }
+
+  formatDisplayDimension(value) {
+    if (this.currentUnit === "px") return String(Math.round(value))
+
+    return String(Math.round(value * 100) / 100)
+  }
+
+  dimensionSummary(width, height) {
+    const unitSummary = this.currentUnit === "px" ?
+      "" :
+      ` · ${this.formatDisplayDimension(this.displayValueFromPixels(width))} x ${this.formatDisplayDimension(this.displayValueFromPixels(height))} ${this.currentUnit}`
+
+    return `${width} x ${height} px${unitSummary} · ${this.ppi} ppi`
+  }
+
+  async estimateOutputSizes() {
+    if (!this.hasImage()) return
+
+    const token = this.estimateToken + 1
+    this.estimateToken = token
+    this.estimatedFileSizeTarget.textContent = "Calculating..."
+    this.estimatedPngSizeTarget.textContent = "Calculating..."
+    this.estimatedWebpSizeTarget.textContent = "Calculating..."
+
+    try {
+      const [pngBlob, webpBlob] = await Promise.all([
+        this.canvasToBlob("image/png"),
+        this.canvasToBlob("image/webp", 0.92)
+      ])
+      if (token !== this.estimateToken) return
+
+      const pngComparison = this.sizeComparison(pngBlob.size)
+      const webpComparison = webpBlob.type === "image/webp" ?
+        this.sizeComparison(webpBlob.size) :
+        "This browser does not support WebP export."
+
+      this.resultSizeDetailTarget.textContent = `PNG ${pngComparison}`
+      this.estimatedFileSizeTarget.textContent = webpBlob.type === "image/webp" ?
+        `PNG ${pngComparison} · WebP ${webpComparison}` :
+        `PNG ${pngComparison}`
+      this.estimatedPngSizeTarget.textContent = pngComparison
+      this.estimatedWebpSizeTarget.textContent = webpComparison
+    } catch (error) {
+      if (token !== this.estimateToken) return
+
+      this.estimatedFileSizeTarget.textContent = "Unable to estimate."
+      this.estimatedPngSizeTarget.textContent = "Unable to estimate."
+      this.estimatedWebpSizeTarget.textContent = "Unable to estimate."
+      this.resultSizeDetailTarget.textContent = "Unable to estimate export size."
+    }
+  }
+
+  sizeComparison(size) {
+    const originalSize = this.originalFile?.size || 0
+    const percent = originalSize > 0 ? Math.round((size / originalSize) * 100) : null
+    const suffix = percent === null ? "" : `（原图的 ${percent}%）`
+
+    return `${this.humanFileSize(size)}${suffix}`
+  }
+
+  loadImage(url) {
+    return new Promise((resolve, reject) => {
+      const image = new Image()
+      image.onload = () => resolve(image)
+      image.onerror = () => reject(new Error("Image load failed."))
+      image.src = url
+    })
+  }
+
+  canvasToBlob(type, quality) {
+    return new Promise((resolve, reject) => {
+      this.canvasTarget.toBlob((blob) => {
+        if (blob) {
+          resolve(blob)
+        } else {
+          reject(new Error("Canvas export is not available in this browser."))
+        }
+      }, type, quality)
+    })
+  }
+
+  downloadName(format) {
+    const extension = format === "webp" ? "webp" : "png"
+    const baseName = (this.originalFile?.name || "image").replace(/\.[^.]+$/, "")
+    const { width, height } = this.currentDimensions()
+
+    return `${baseName}-${width}x${height}.${extension}`
+  }
+
+  scaleLabel(width, height) {
+    const widthScale = Math.round((width / this.image.naturalWidth) * 100)
+    const heightScale = Math.round((height / this.image.naturalHeight) * 100)
+
+    return widthScale === heightScale ? `${widthScale}%` : `${widthScale}% x ${heightScale}%`
+  }
+
+  humanFileSize(size) {
+    if (!size) return "--"
+
+    const units = ["B", "KB", "MB", "GB"]
+    let value = size
+    let unitIndex = 0
+
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024
+      unitIndex += 1
+    }
+
+    const precision = unitIndex === 0 ? 0 : value >= 10 ? 1 : 2
+    return `${value.toFixed(precision)} ${units[unitIndex]}`
+  }
+
+  setStatus(message, isError = false) {
+    if (!this.hasStatusTarget) return
+
+    this.statusTarget.textContent = message
+    this.statusTarget.classList.toggle("is-error", isError)
+  }
+}
+
 window.Stimulus = Application.start()
 window.Stimulus.register("theme", ThemeController)
 window.Stimulus.register("arcade", ArcadeController)
 window.Stimulus.register("gallery", GalleryController)
 window.Stimulus.register("rich-text", RichTextController)
+window.Stimulus.register("image-resize", ImageResizeController)

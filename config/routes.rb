@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   get "games", to: "pages#games"
   get "games/rubordle", to: "pages#rubordle"
   get "games/sudoku", to: "pages#sudoku"
+  get "tools", to: "pages#tools"
+  get "tools/image-resize", to: "pages#image_resize", as: :image_resize_tool
   resources :photos, only: [:index, :show], param: :slug
   resources :posts, only: [:index, :show], param: :slug
 

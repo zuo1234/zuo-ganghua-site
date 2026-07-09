@@ -45,6 +45,14 @@
     <span class="feature-link__arrow" aria-hidden="true">-&gt;</span>
   <% end %>
 
+  <%= link_to tools_path, class: "feature-link feature-link--tools" do %>
+    <span class="feature-link__content">
+      <span class="feature-link__label">Tools for actual work</span>
+      <span class="feature-link__text">放一些我自己也会用的小工具。第一站是浏览器内图片尺寸调整，后面会继续补充。</span>
+    </span>
+    <span class="feature-link__arrow" aria-hidden="true">-&gt;</span>
+  <% end %>
+
   <section class="section" aria-labelledby="writing-title">
     <div class="section__header">
       <h2 id="writing-title">近期写作</h2>
@@ -117,6 +125,7 @@
     <a href="#projects">Projects</a>
     <%= link_to "Writing", posts_path %>
     <%= link_to "Photos", photos_path %>
+    <%= link_to "Tools", tools_path %>
     <a href="mailto:hello@example.com">Email</a>
   </nav>
 </footer>
