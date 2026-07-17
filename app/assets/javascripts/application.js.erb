@@ -1070,6 +1070,136 @@ class RichTextController extends Controller {
   }
 }
 
+class AiChatController extends Controller {
+  static targets = ["messages", "form", "input", "sendButton", "status"]
+  static values = { endpoint: String }
+
+  connect() {
+    this.history = []
+    this.isSending = false
+    this.inputTarget.focus()
+  }
+
+  handleKeydown(event) {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return
+
+    event.preventDefault()
+    this.formTarget.requestSubmit()
+  }
+
+  async send(event) {
+    event.preventDefault()
+
+    const message = this.inputTarget.value.trim()
+    if (!message || this.isSending) return
+
+    this.appendMessage("user", message)
+    this.history.push({ role: "user", content: message })
+    this.inputTarget.value = ""
+    this.setSending(true)
+    this.showTyping()
+
+    try {
+      const response = await fetch(this.endpointValue, {
+        method: "POST",
+        headers: this.requestHeaders(),
+        body: JSON.stringify({
+          message,
+          history: this.history.slice(0, -1)
+        })
+      })
+      const payload = await this.responsePayload(response)
+
+      if (!response.ok) throw new Error(payload.error || "AI 服务暂时不可用，请稍后重试。")
+
+      const reply = payload.message?.trim()
+      if (!reply) throw new Error("AI 没有返回有效回答，请重试。")
+
+      this.removeTyping()
+      this.appendMessage("assistant", reply)
+      this.history.push({ role: "assistant", content: reply })
+      this.setStatus("准备就绪")
+    } catch (error) {
+      this.removeTyping()
+      this.history.pop()
+      this.appendMessage("assistant", error.message || "AI 服务暂时不可用，请稍后重试。", true)
+      this.setStatus("请求未完成", true)
+    } finally {
+      this.setSending(false)
+      this.inputTarget.focus()
+    }
+  }
+
+  appendMessage(role, content, isError = false) {
+    const message = document.createElement("article")
+    message.className = `chat-message chat-message--${role}`
+    if (isError) message.classList.add("is-error")
+
+    const label = document.createElement("span")
+    label.className = "chat-message__role"
+    label.textContent = role === "user" ? "YOU" : "ZUOGH AI"
+
+    const body = document.createElement("p")
+    body.className = "chat-message__body"
+    body.textContent = content
+
+    message.append(label, body)
+    this.messagesTarget.append(message)
+    this.scrollToLatest()
+    return message
+  }
+
+  showTyping() {
+    this.typingMessage = this.appendMessage("assistant", "正在思考...")
+    this.typingMessage.classList.add("is-typing")
+    this.setStatus("正在生成回答")
+  }
+
+  removeTyping() {
+    this.typingMessage?.remove()
+    this.typingMessage = null
+  }
+
+  requestHeaders() {
+    const headers = {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest"
+    }
+    const token = document.querySelector("meta[name='csrf-token']")?.content
+    if (token) headers["X-CSRF-Token"] = token
+
+    return headers
+  }
+
+  async responsePayload(response) {
+    const body = await response.text()
+    if (!body) return {}
+
+    try {
+      return JSON.parse(body)
+    } catch (error) {
+      return {}
+    }
+  }
+
+  setSending(isSending) {
+    this.isSending = isSending
+    this.inputTarget.disabled = isSending
+    this.sendButtonTarget.disabled = isSending
+    this.formTarget.setAttribute("aria-busy", String(isSending))
+  }
+
+  setStatus(message, isError = false) {
+    this.statusTarget.textContent = message
+    this.statusTarget.classList.toggle("is-error", isError)
+  }
+
+  scrollToLatest() {
+    this.messagesTarget.scrollTop = this.messagesTarget.scrollHeight
+  }
+}
+
 class ImageResizeController extends Controller {
   static targets = [
     "dropzone",
@@ -1608,4 +1738,5 @@ window.Stimulus.register("theme", ThemeController)
 window.Stimulus.register("arcade", ArcadeController)
 window.Stimulus.register("gallery", GalleryController)
 window.Stimulus.register("rich-text", RichTextController)
+window.Stimulus.register("ai-chat", AiChatController)
 window.Stimulus.register("image-resize", ImageResizeController)

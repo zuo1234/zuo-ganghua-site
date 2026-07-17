@@ -64,3 +64,23 @@ docker run --rm -p 3000:3000 \
 
 For production, replace `SECRET_KEY_BASE`, `ADMIN_USERNAME`, and
 `ADMIN_PASSWORD` with real secret values.
+
+## AI Chat
+
+The `/chat` page uses the OpenAI-compatible Responses API through the
+`ruby-openai` gem. Set these runtime environment variables before starting
+Rails or Docker:
+
+```sh
+OPENAI_API_KEY=your_api_key
+OPENAI_API_BASE_URL=https://vibe.soyoung.com/
+OPENAI_MODEL=gpt-5.6-terra
+OPENAI_REQUEST_TIMEOUT=60
+AI_CHAT_ENABLED=true
+AI_CHAT_RATE_LIMIT=12
+```
+
+`AI_CHAT_RATE_LIMIT` is the per-IP request limit in a five-minute window. The
+chat is disabled until `OPENAI_API_KEY` is configured; the key stays on the
+server and is never sent to the browser. Set `OPENAI_API_BASE_URL` to the
+official OpenAI endpoint or another OpenAI-compatible gateway as needed.

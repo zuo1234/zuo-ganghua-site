@@ -53,6 +53,14 @@
     <span class="feature-link__arrow" aria-hidden="true">-&gt;</span>
   <% end %>
 
+  <%= link_to chat_path, class: "feature-link feature-link--chat" do %>
+    <span class="feature-link__content">
+      <span class="feature-link__label">Ask Zuogh</span>
+      <span class="feature-link__text">聊聊 Ruby、Rails、Golang、后端工程和这个站点里的内容。</span>
+    </span>
+    <span class="feature-link__arrow" aria-hidden="true">-&gt;</span>
+  <% end %>
+
   <section class="section" aria-labelledby="writing-title">
     <div class="section__header">
       <h2 id="writing-title">近期写作</h2>
@@ -126,6 +134,7 @@
     <%= link_to "Writing", posts_path %>
     <%= link_to "Photos", photos_path %>
     <%= link_to "Tools", tools_path %>
+    <%= link_to "AI Chat", chat_path %>
     <a href="mailto:hello@example.com">Email</a>
   </nav>
 </footer>

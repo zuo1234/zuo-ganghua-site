@@ -342,6 +342,28 @@ h1 {
   color: var(--accent-third);
 }
 
+.feature-link--chat {
+  margin-top: -2.8rem;
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--line));
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      color-mix(in srgb, var(--accent) 6%, transparent) 5px,
+      color-mix(in srgb, var(--accent) 6%, transparent) 10px
+    ),
+    var(--panel);
+}
+
+.feature-link--chat:hover {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+}
+
+.feature-link--chat .feature-link__label {
+  color: var(--accent);
+}
+
 .section {
   border-top: 1px solid var(--line);
   padding: 3rem 0 3.7rem;
@@ -581,6 +603,162 @@ h2 {
 .tools-status.is-error {
   border-left-color: color-mix(in srgb, var(--accent) 68%, var(--line));
   color: var(--accent);
+}
+
+.chat-hero {
+  padding-bottom: 1.45rem;
+}
+
+.chat-shell {
+  display: grid;
+  grid-template-rows: minmax(24rem, 1fr) auto;
+  min-height: 36rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+}
+
+.chat-stream {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+  max-height: 34rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.35rem;
+  scrollbar-color: var(--line) transparent;
+}
+
+.chat-message {
+  display: grid;
+  gap: 0.4rem;
+  width: fit-content;
+  max-width: min(40rem, 88%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  padding: 0.9rem 1rem;
+}
+
+.chat-message--assistant {
+  justify-self: start;
+}
+
+.chat-message--user {
+  justify-self: end;
+  border-color: color-mix(in srgb, var(--accent-alt) 38%, var(--line));
+  background: color-mix(in srgb, var(--accent-alt) 8%, var(--panel));
+}
+
+.chat-message.is-error {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+}
+
+.chat-message.is-typing {
+  opacity: 0.72;
+}
+
+.chat-message__role,
+.chat-status {
+  color: var(--soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.76rem;
+}
+
+.chat-message--user .chat-message__role {
+  color: var(--accent-alt);
+}
+
+.chat-message__body {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.chat-composer {
+  display: grid;
+  gap: 0.75rem;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel-strong) 70%, transparent);
+  padding: 1rem 1.35rem 1.15rem;
+}
+
+.chat-composer__input {
+  width: 100%;
+  min-height: 5.6rem;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.65;
+  padding: 0.8rem 0.9rem;
+}
+
+.chat-composer__input:focus {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  outline: none;
+}
+
+.chat-composer__input:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.chat-composer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chat-status {
+  margin: 0;
+}
+
+.chat-status.is-error {
+  color: var(--accent);
+}
+
+.chat-send-button {
+  min-width: 5.5rem;
+  min-height: 2.7rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 56%, var(--line));
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-family: "IBM Plex Mono", monospace;
+  padding: 0.65rem 1rem;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.chat-send-button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.chat-send-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .tools-workbench {
@@ -2611,6 +2789,34 @@ body:has(.terminal-page) .theme-toggle:focus-visible {
   .tools-hero {
     grid-template-columns: 1fr;
     padding-top: 2rem;
+  }
+
+  .chat-shell {
+    grid-template-rows: minmax(22rem, 1fr) auto;
+    min-height: 0;
+  }
+
+  .chat-stream {
+    max-height: none;
+    min-height: 22rem;
+    padding: 1rem;
+  }
+
+  .chat-message {
+    max-width: 100%;
+  }
+
+  .chat-composer {
+    padding: 1rem;
+  }
+
+  .chat-composer__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .chat-send-button {
+    width: 100%;
   }
 
   .tools-workbench,

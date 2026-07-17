@@ -19,6 +19,11 @@ gem "sqlite3", "~> 1.4"
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
 
+# OpenAI-compatible Responses API client used by the AI chat service.
+gem "ruby-openai", "~> 8.3"
+# Faraday 2.9+ requires Ruby 3; Ruby 2.7.7 is compatible through Faraday 2.8.
+gem "faraday", "~> 2.8.1"
+
 # Use Redis adapter to run Action Cable in production
 # gem "redis", "~> 4.0"
 

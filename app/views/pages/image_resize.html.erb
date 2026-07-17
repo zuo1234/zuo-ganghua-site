@@ -9,6 +9,7 @@
       <%= link_to "/projects", root_path(anchor: "projects") %>
       <%= link_to "/journal", posts_path %>
       <%= link_to "/tools", tools_path, class: "is-active" %>
+      <%= link_to "/ai", chat_path %>
       <%= link_to "/contact", "mailto:hello@example.com" %>
     </div>
   </nav>
@@ -286,6 +287,7 @@
     <%= link_to "Writing", posts_path %>
     <%= link_to "Photos", photos_path %>
     <%= link_to "Tools", tools_path %>
+    <%= link_to "AI Chat", chat_path %>
     <%= link_to "Email", "mailto:hello@example.com" %>
   </nav>
 </footer>
